@@ -1,36 +1,47 @@
 {
   "expo": {
-    "name": "ZOD-Manpower-IOS",
+    "name": "ZOD Manpower",
     "slug": "ZOD-Manpower-IOS",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/icon.png",
     "scheme": "zodmanpowerios",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zod.manpower",
+      "buildNumber": "1.0.0",
+      "icon": {
+        "icon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/icon.png"
+      }
     },
+    
     "android": {
+      "package": "com.zod.manpower",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-foreground.png",
+        "backgroundImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-background.png",
+        "monochromeImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-monochrome.png",
+        "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
+    
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/favicon.png"
     },
+    
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -40,6 +51,7 @@
         }
       ]
     ],
+    
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
