@@ -30,7 +30,9 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png",
         "backgroundColor": "#E6F4FE"
       },
-      "permissions": ["INTERNET"]
+      "permissions": [
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
