@@ -1,60 +1,95 @@
 {
   "expo": {
     "name": "ZOD Manpower",
-    "slug": "ZOD-Manpower-IOS",
+    "slug": "zod-manpower",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "zodmanpowerios",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    
+    "jsEngine": "hermes",
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/73898b70-ba5c-4ffd-a35a-3e1c519ae4cf"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zod.manpower",
-      "buildNumber": "1.0.0",
-      "icon": {
-        "icon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/icon.png"
+      "jsEngine": "hermes",
+      "requireFullScreen": true,
+      "icon": "./assets/images/icon.png",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent",
+        "UIViewControllerBasedStatusBarAppearance": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
-    
     "android": {
       "package": "com.zod.manpower",
       "versionCode": 1,
+      "jsEngine": "hermes",
       "adaptiveIcon": {
-        "foregroundImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-foreground.png",
-        "backgroundImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-background.png",
-        "monochromeImage": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/android-icon-monochrome.png",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
         "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
-    
     "web": {
       "output": "static",
-      "favicon": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
     },
-    
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/assets/splash-icon.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#1a237e",
           "dark": {
+            "image": "./assets/images/splash-icon.png",
             "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
           }
         }
       ]
     ],
-    
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
-    }
+      "reactCompiler": true,
+      "turboModules": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "73898b70-ba5c-4ffd-a35a-3e1c519ae4cf"
+      },
+      "router": {
+        "origin": false
+      }
+    },
+    "owner": "ashilara2007s-organization"
   }
 }

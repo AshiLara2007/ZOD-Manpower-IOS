@@ -1,18 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    Linking,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Linking,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -25,7 +25,7 @@ const isSmallDevice = width < 375;
 
 export default function CandidateProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { t, colors, theme, language, isRTL } = useApp();
+  const { t, colors } = useApp();
   const { id } = useLocalSearchParams();
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function CandidateProfileScreen() {
     }
   }, [id]);
 
-  const fetchCandidate = async () => {
+  const fetchCandidate = useCallback(async () => {
     try {
       const candidateId = String(id);
       const { data, error } = await supabase
@@ -55,9 +55,9 @@ export default function CandidateProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = useCallback(() => {
     clickHaptic();
     if (!candidate) return;
 
@@ -78,9 +78,9 @@ export default function CandidateProfileScreen() {
 
     const encodedMessage = encodeURIComponent(message);
     Linking.openURL(`https://wa.me/97455355206?text=${encodedMessage}`);
-  };
+  }, [candidate]);
 
-  const handleViewCv = () => {
+  const handleViewCv = useCallback(() => {
     clickHaptic();
     if (candidate?.cv) {
       setShowCvModal(true);
@@ -88,28 +88,28 @@ export default function CandidateProfileScreen() {
     } else {
       Alert.alert('Info', 'CV not available for this candidate');
     }
-  };
+  }, [candidate]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowCvModal(false);
     setCvLoading(true);
-  };
+  }, []);
 
-  const handleDownloadCv = () => {
+  const handleDownloadCv = useCallback(() => {
     buttonHaptic();
     if (candidate?.cv) {
       Linking.openURL(candidate.cv);
     }
-  };
+  }, [candidate]);
 
-  const handleOpenInBrowser = () => {
+  const handleOpenInBrowser = useCallback(() => {
     clickHaptic();
     if (candidate?.cv) {
       Linking.openURL(candidate.cv);
     }
-  };
+  }, [candidate]);
 
-  const getStatusBadge = () => {
+  const getStatusBadge = useCallback(() => {
     const workerType = candidate?.worker_type || candidate?.workerType || '';
     
     if (workerType === 'Returned Housemaids' || workerType === 'Returned') {
@@ -131,46 +131,21 @@ export default function CandidateProfileScreen() {
         bg: colors.statusAvailable
       };
     }
-  };
+  }, [candidate, t, colors]);
 
   const statusBadge = getStatusBadge();
 
   const infoItems = [
-    { 
-      icon: '📅', 
-      label: t('age'), 
-      value: candidate?.age ? `${candidate.age} ${t('years')}` : null 
-    },
-    { 
-      icon: '👤', 
-      label: t('gender'), 
-      value: candidate?.gender || null 
-    },
-    { 
-      icon: '📍', 
-      label: t('nationality'), 
-      value: candidate?.country || null 
-    },
-    { 
-      icon: '✅', 
-      label: t('maritalStatus'), 
-      value: candidate?.marital_status || candidate?.maritalStatus || null 
-    },
-    { 
-      icon: '🕐', 
-      label: t('experience'), 
-      value: candidate?.experience || null 
-    },
-    { 
-      icon: '💼', 
-      label: 'Worker Type', 
-      value: candidate?.worker_type || candidate?.workerType || 'Full Time' 
-    },
+    { icon: '📅', label: t('age'), value: candidate?.age ? `${candidate.age} ${t('years')}` : null },
+    { icon: '👤', label: t('gender'), value: candidate?.gender || null },
+    { icon: '📍', label: t('nationality'), value: candidate?.country || null },
+    { icon: '✅', label: t('maritalStatus'), value: candidate?.marital_status || candidate?.maritalStatus || null },
+    { icon: '🕐', label: t('experience'), value: candidate?.experience || null },
+    { icon: '💼', label: 'Worker Type', value: candidate?.worker_type || candidate?.workerType || 'Full Time' },
   ].filter(item => item.value);
 
   const styles = getStyles(colors);
 
-  // Loading State
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
@@ -180,7 +155,6 @@ export default function CandidateProfileScreen() {
     );
   }
 
-  // Error State
   if (!candidate) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -200,7 +174,7 @@ export default function CandidateProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* CV Modal with WebView */}
+      {/* CV Modal */}
       <Modal
         visible={showCvModal}
         animationType="slide"
@@ -208,7 +182,6 @@ export default function CandidateProfileScreen() {
         onRequestClose={handleCloseModal}
       >
         <SafeAreaView style={styles.modalContainer}>
-          {/* Modal Header */}
           <View style={[styles.modalHeader, { backgroundColor: colors.hero }]}>
             <Text style={styles.modalTitle}>{candidate.name} - CV</Text>
             <TouchableOpacity 
@@ -220,7 +193,6 @@ export default function CandidateProfileScreen() {
             </TouchableOpacity>
           </View>
           
-          {/* WebView - CV Viewer */}
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             {candidate.cv ? (
               <View style={styles.webViewContainer}>
@@ -242,14 +214,6 @@ export default function CandidateProfileScreen() {
                     Alert.alert('Error', 'Failed to load CV. Please try again.');
                   }}
                   startInLoadingState={true}
-                  renderLoading={() => (
-                    <View style={styles.webViewLoader}>
-                      <ActivityIndicator size="large" color={colors.primary} />
-                      <Text style={[styles.webViewLoaderText, { color: colors.textSecondary }]}>
-                        Loading CV...
-                      </Text>
-                    </View>
-                  )}
                 />
               </View>
             ) : (
@@ -261,7 +225,6 @@ export default function CandidateProfileScreen() {
             )}
           </View>
 
-          {/* Modal Footer */}
           <View style={[styles.modalFooter, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <TouchableOpacity 
               style={[styles.modalFooterButton, { backgroundColor: colors.primary }]}
@@ -289,7 +252,6 @@ export default function CandidateProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
       >
-        {/* Hero Photo */}
         <View style={styles.heroContainer}>
           <Image
             source={{ 
@@ -299,7 +261,6 @@ export default function CandidateProfileScreen() {
           />
           <View style={[styles.heroOverlay, { backgroundColor: colors.background + '80' }]} />
 
-          {/* Back Button */}
           <TouchableOpacity 
             onPress={() => router.back()} 
             style={[styles.heroBackButton, { backgroundColor: 'rgba(0,0,0,0.3)' }]}
@@ -309,9 +270,7 @@ export default function CandidateProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Content */}
         <View style={styles.contentContainer}>
-          {/* Main Card */}
           <View style={[styles.mainCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.mainCardHeader}>
               <Text style={[styles.mainCardName, { color: colors.text }]}>{candidate.name}</Text>
@@ -324,7 +283,6 @@ export default function CandidateProfileScreen() {
             <Text style={[styles.mainCardJob, { color: colors.primary }]}>{candidate.job}</Text>
             <Text style={[styles.mainCardRef, { color: colors.textMuted }]}>Ref: {candidate.ref || candidate.id}</Text>
 
-            {/* Salary Box */}
             <View style={[styles.salaryBox, { backgroundColor: colors.primary + '15' }]}>
               <Text style={[styles.salaryLabel, { color: colors.textSecondary }]}>{t('salary')}</Text>
               <Text style={[styles.salaryValue, { color: colors.primary }]}>
@@ -332,7 +290,6 @@ export default function CandidateProfileScreen() {
               </Text>
             </View>
 
-            {/* Buttons */}
             <View style={styles.buttonRow}>
               <TouchableOpacity 
                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
@@ -351,7 +308,6 @@ export default function CandidateProfileScreen() {
             </View>
           </View>
 
-          {/* Personal Info */}
           <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.infoCardTitle, { color: colors.text }]}>{t('personalInfo')}</Text>
             <View style={styles.infoGrid}>
@@ -369,7 +325,6 @@ export default function CandidateProfileScreen() {
             </View>
           </View>
 
-          {/* CV Document Link */}
           {candidate.cv && (
             <TouchableOpacity 
               style={[styles.cvLinkCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -426,7 +381,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // Hero Section
   heroContainer: {
     height: height * 0.4,
     width: '100%',
@@ -460,13 +414,11 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  // Content
   contentContainer: {
     marginTop: -height * 0.08,
     paddingHorizontal: 16,
     gap: 16,
   },
-  // Main Card
   mainCard: {
     borderRadius: 16,
     padding: 16,
@@ -508,7 +460,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 11,
     marginBottom: 12,
   },
-  // Salary Box
   salaryBox: {
     borderRadius: 12,
     padding: 12,
@@ -525,7 +476,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 13,
     fontWeight: 'normal',
   },
-  // Buttons
   buttonRow: {
     flexDirection: 'row',
     gap: 10,
@@ -552,7 +502,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  // Info Card
   infoCard: {
     borderRadius: 16,
     padding: 16,
@@ -596,7 +545,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  // CV Link
   cvLinkCard: {
     borderRadius: 16,
     padding: 16,
@@ -630,7 +578,6 @@ const getStyles = (colors: any) => StyleSheet.create({
   cvLinkSubtitle: {
     fontSize: 11,
   },
-  // Modal
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.95)',

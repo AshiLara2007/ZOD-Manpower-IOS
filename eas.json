@@ -1,47 +1,37 @@
 {
   "cli": {
-    "version": ">= 3.0.0"
+    "version": ">= 3.0.0",
+    "appVersionSource": "remote",
+    "requireCommit": true
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "bundleIdentifier": "com.zod.manpower"
-      },
-      "android": {
-        "package": "com.zod.manpower"
+        "simulator": false
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "bundleIdentifier": "com.zod.manpower",
-        "buildType": "archive"
+        "simulator": false
       },
       "android": {
-        "package": "com.zod.manpower",
         "buildType": "apk"
       }
     },
     "production": {
+      "distribution": "store",
       "ios": {
-        "bundleIdentifier": "com.zod.manpower",
-        "buildType": "archive"
+        "simulator": false
       },
       "android": {
-        "package": "com.zod.manpower",
         "buildType": "app-bundle"
       }
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "YOUR_APPLE_ID_EMAIL",
-        "ascAppId": "YOUR_APP_STORE_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
-      }
-    }
+    "production": {}
   }
 }

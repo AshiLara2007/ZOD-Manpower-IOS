@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,12 +17,16 @@ import { buttonHaptic, clickHaptic } from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
+const isSmallDevice = width < 375;
+
+// Logo URL
 const LOGO_URL = "https://zodmanpower.info/logo/logo.jpeg";
 
-const CandidateCard = ({ candidate }: { candidate: any }) => {
+// Optimized Candidate Card Component
+const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
   const { t, colors } = useApp();
   
-  const getStatus = () => {
+  const getStatus = useCallback(() => {
     const wt = candidate.worker_type || candidate.workerType || '';
     if (wt === 'Returned Housemaids' || wt === 'Returned') {
       return { 
@@ -42,34 +46,34 @@ const CandidateCard = ({ candidate }: { candidate: any }) => {
       color: colors.statusTextAvailable, 
       bg: colors.statusAvailable 
     };
-  };
+  }, [candidate, t, colors]);
 
   const status = getStatus();
   const imageUrl = candidate.pic || `https://ui-avatars.com/api/?name=${candidate.name?.charAt(0) || 'C'}&background=D4880F&color=fff`;
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     clickHaptic();
     router.push(`/candidate/${candidate.id}`);
-  };
-
-  const styles = getCandidateStyles(colors);
+  }, [candidate.id]);
 
   return (
     <TouchableOpacity
-      style={styles.candidateCard}
+      style={[styles.candidateCard, { backgroundColor: colors.card }]}
       onPress={handlePress}
       activeOpacity={0.7}
     >
       <Image source={{ uri: imageUrl }} style={styles.candidateImage} />
       <View style={styles.candidateInfo}>
-        <Text style={styles.candidateName} numberOfLines={1}>
+        <Text style={[styles.candidateName, { color: colors.text }]} numberOfLines={1}>
           {candidate.name || 'N/A'}
         </Text>
-        <Text style={styles.candidateJob} numberOfLines={1}>
+        <Text style={[styles.candidateJob, { color: colors.textSecondary }]} numberOfLines={1}>
           {candidate.job || 'N/A'}
         </Text>
         <View style={styles.candidateRow}>
-          <Text style={styles.candidateCountry}>📍 {candidate.country || 'N/A'}</Text>
+          <Text style={[styles.candidateCountry, { color: colors.textMuted }]}>
+            📍 {candidate.country || 'N/A'}
+          </Text>
           <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
             <Text style={[styles.statusText, { color: status.color }]}>
               {status.label}
@@ -77,16 +81,16 @@ const CandidateCard = ({ candidate }: { candidate: any }) => {
           </View>
         </View>
       </View>
-      <Text style={styles.candidateSalary}>
+      <Text style={[styles.candidateSalary, { color: colors.primary }]}>
         {candidate.salary || '0'} QAR
       </Text>
     </TouchableOpacity>
   );
-};
+});
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { t, colors, theme } = useApp();
+  const { t, colors } = useApp();
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -95,7 +99,7 @@ export default function HomeScreen() {
     fetchCandidates();
   }, []);
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('talents')
@@ -110,45 +114,49 @@ export default function HomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchCandidates();
-  };
+  }, [fetchCandidates]);
 
-  const availableCandidates = candidates.filter(c => {
-    const workerType = c.worker_type || c.workerType || '';
-    return workerType !== 'Returned Housemaids' && workerType !== 'Returned';
-  });
+  const availableCandidates = useMemo(() => {
+    return candidates.filter(c => {
+      const workerType = c.worker_type || c.workerType || '';
+      return workerType !== 'Returned Housemaids' && workerType !== 'Returned';
+    });
+  }, [candidates]);
 
-  const returnedCount = candidates.filter(c => {
-    const workerType = c.worker_type || c.workerType || '';
-    return workerType === 'Returned Housemaids' || workerType === 'Returned';
-  }).length;
+  const returnedCount = useMemo(() => {
+    return candidates.filter(c => {
+      const workerType = c.worker_type || c.workerType || '';
+      return workerType === 'Returned Housemaids' || workerType === 'Returned';
+    }).length;
+  }, [candidates]);
 
-  const recentCandidates = availableCandidates.slice(0, 5);
+  const recentCandidates = useMemo(() => {
+    return availableCandidates.slice(0, 5);
+  }, [availableCandidates]);
 
-  const handleBrowsePress = () => {
+  const handleBrowsePress = useCallback(() => {
     buttonHaptic();
     router.push('/(tabs)/candidates');
-  };
+  }, []);
 
-  const handleJobsPress = () => {
+  const handleJobsPress = useCallback(() => {
     buttonHaptic();
     router.push('/(tabs)/jobs');
-  };
+  }, []);
 
-  const handleSeeAllPress = () => {
+  const handleSeeAllPress = useCallback(() => {
     clickHaptic();
     router.push('/(tabs)/candidates');
-  };
-
-  const styles = getStyles(colors, theme);
+  }, []);
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+      <View style={[styles.loadingContainer, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('loading')}</Text>
       </View>
@@ -164,9 +172,16 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 20 }}
     >
+      {/* Hero Section */}
       <View style={[styles.hero, { backgroundColor: colors.hero }]}>
         <View style={styles.heroContent}>
-          <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} />
+          <Image 
+            source={{ uri: LOGO_URL }} 
+            style={styles.heroLogo}
+            onError={(e: any) => {
+              e.target.source = { uri: `https://ui-avatars.com/api/?name=ZOD&background=D4880F&color=fff&size=48` };
+            }}
+          />
           <View>
             <Text style={[styles.heroTitle, { color: colors.heroText }]}>ZOD Manpower</Text>
             <Text style={[styles.heroSubtitle, { color: colors.heroText + '80' }]}>Recruitment Agency</Text>
@@ -196,8 +211,9 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Stats Section */}
       <View style={styles.statsContainer}>
-        <View style={[styles.statCard, { backgroundColor: colors.statBg }]}>
+        <View style={[styles.statCard, { backgroundColor: colors.card }]}>
           <Text style={[styles.statNumber, { color: colors.text }]}>{candidates.length}</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('total')}</Text>
         </View>
@@ -215,6 +231,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Available Candidates Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('availableCandidates')}</Text>
@@ -240,7 +257,7 @@ export default function HomeScreen() {
   );
 }
 
-const getStyles = (colors: any, theme: string) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -253,6 +270,7 @@ const getStyles = (colors: any, theme: string) => StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
   },
+  // Hero Section
   hero: {
     paddingHorizontal: width * 0.05,
     paddingTop: height * 0.015,
@@ -322,6 +340,7 @@ const getStyles = (colors: any, theme: string) => StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  // Stats Section
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -349,6 +368,7 @@ const getStyles = (colors: any, theme: string) => StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  // Candidates Section
   section: {
     paddingHorizontal: width * 0.04,
     paddingVertical: height * 0.015,
@@ -370,23 +390,8 @@ const getStyles = (colors: any, theme: string) => StyleSheet.create({
   candidatesList: {
     gap: 10,
   },
-  emptyContainer: {
-    padding: 30,
-    alignItems: 'center',
-    borderRadius: 16,
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-  },
-});
-
-const getCandidateStyles = (colors: any) => StyleSheet.create({
+  // Candidate Card
   candidateCard: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 12,
     flexDirection: 'row',
@@ -410,12 +415,10 @@ const getCandidateStyles = (colors: any) => StyleSheet.create({
   candidateName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 2,
   },
   candidateJob: {
     fontSize: 13,
-    color: colors.textSecondary,
     marginBottom: 3,
   },
   candidateRow: {
@@ -425,7 +428,6 @@ const getCandidateStyles = (colors: any) => StyleSheet.create({
   },
   candidateCountry: {
     fontSize: 11,
-    color: colors.textMuted,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -439,7 +441,18 @@ const getCandidateStyles = (colors: any) => StyleSheet.create({
   candidateSalary: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: colors.primary,
     marginLeft: 4,
+  },
+  emptyContainer: {
+    padding: 30,
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  emptyIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
   },
 });
