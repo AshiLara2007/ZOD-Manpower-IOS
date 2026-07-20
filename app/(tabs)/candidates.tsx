@@ -6,6 +6,7 @@ import {
   FlatList,
   Image,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +20,19 @@ import { supabase } from '../../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
+
+// Country Flags Data
+const COUNTRIES = [
+  { id: 'all', name: 'All', flag: '🌍' },
+  { id: 'Indonesia', name: 'Indonesia', flag: '🇮🇩' },
+  { id: 'Sri Lanka', name: 'Sri Lanka', flag: '🇱🇰' },
+  { id: 'Philippines', name: 'Philippines', flag: '🇵🇭' },
+  { id: 'Bangladesh', name: 'Bangladesh', flag: '🇧🇩' },
+  { id: 'India', name: 'India', flag: '🇮🇳' },
+  { id: 'Ethiopia', name: 'Ethiopia', flag: '🇪🇹' },
+  { id: 'Kenya', name: 'Kenya', flag: '🇰🇪' },
+  { id: 'Uganda', name: 'Uganda', flag: '🇺🇬' },
+];
 
 // Optimized Candidate Card - React.memo
 const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
@@ -95,6 +109,7 @@ export default function CandidatesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [selectedCountry, setSelectedCountry] = useState('all');
 
   useEffect(() => {
     fetchCandidates();
@@ -102,7 +117,7 @@ export default function CandidatesScreen() {
 
   useEffect(() => {
     filterCandidates();
-  }, [candidates, search, filter]);
+  }, [candidates, search, filter, selectedCountry]);
 
   const fetchCandidates = useCallback(async () => {
     try {
@@ -124,6 +139,7 @@ export default function CandidatesScreen() {
   const filterCandidates = useCallback(() => {
     let result = [...candidates];
 
+    // Search filter
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(c =>
@@ -133,6 +149,14 @@ export default function CandidatesScreen() {
       );
     }
 
+    // Country filter
+    if (selectedCountry !== 'all') {
+      result = result.filter(c => 
+        c.country?.toLowerCase() === selectedCountry.toLowerCase()
+      );
+    }
+
+    // Status filter
     if (filter === 'available') {
       result = result.filter(c => {
         const wt = c.worker_type || c.workerType || '';
@@ -146,7 +170,7 @@ export default function CandidatesScreen() {
     }
 
     setFiltered(result);
-  }, [candidates, search, filter]);
+  }, [candidates, search, filter, selectedCountry]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -156,6 +180,11 @@ export default function CandidatesScreen() {
   const handleFilterPress = useCallback((filterType: string) => {
     clickHaptic();
     setFilter(filterType);
+  }, []);
+
+  const handleCountryPress = useCallback((countryId: string) => {
+    clickHaptic();
+    setSelectedCountry(countryId);
   }, []);
 
   const counts = useMemo(() => {
@@ -195,6 +224,39 @@ export default function CandidatesScreen() {
           />
         </View>
 
+        {/* Country Flags - Horizontal Scroll */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.flagsContainer}
+          contentContainerStyle={styles.flagsContent}
+        >
+          {COUNTRIES.map((country) => (
+            <TouchableOpacity
+              key={country.id}
+              style={[
+                styles.flagButton,
+                selectedCountry === country.id && styles.flagButtonActive,
+                { backgroundColor: selectedCountry === country.id ? colors.primary : colors.background }
+              ]}
+              onPress={() => handleCountryPress(country.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.flagEmoji}>{country.flag}</Text>
+              <Text 
+                style={[
+                  styles.flagName,
+                  { color: selectedCountry === country.id ? '#fff' : colors.textSecondary }
+                ]}
+                numberOfLines={1}
+              >
+                {country.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Status Filters */}
         <View style={styles.filterContainer}>
           <TouchableOpacity
             style={[styles.filterButton, filter === 'all' && styles.filterActive]}
@@ -283,6 +345,36 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     fontSize: 14,
   },
+  // Country Flags Styles
+  flagsContainer: {
+    marginBottom: 10,
+  },
+  flagsContent: {
+    paddingRight: 16,
+    gap: 8,
+  },
+  flagButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  flagButtonActive: {
+    borderColor: 'transparent',
+  },
+  flagEmoji: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  flagName: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  // Status Filters
   filterContainer: {
     flexDirection: 'row',
     gap: 6,
