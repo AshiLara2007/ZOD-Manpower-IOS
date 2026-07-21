@@ -2,15 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useApp } from '../lib/AppContext';
+import { registerForPushNotificationsAsync, requestNotificationPermission, savePushToken } from '../lib/notifications';
 
 const { width, height } = Dimensions.get('window');
 const LOGO_URL = "https://zodmanpower.info/logo/logo.jpeg";
@@ -31,11 +32,13 @@ export default function WelcomeScreen() {
       const saved = await AsyncStorage.getItem('manpower_app_preferences');
       if (saved) {
         const prefs = JSON.parse(saved);
-        // If user already has preferences, go directly to app
         if (prefs.language && prefs.theme) {
-          // Update app context with saved preferences
           updateLanguage(prefs.language);
           updateTheme(prefs.theme);
+          
+          // Request notification permission and register token
+          await setupNotifications();
+          
           router.replace('/(tabs)');
           return;
         }
@@ -45,6 +48,25 @@ export default function WelcomeScreen() {
     } catch (error) {
       setLoading(false);
       setStep(1);
+    }
+  };
+
+  const setupNotifications = async () => {
+    try {
+      // Request permission
+      const permissionStatus = await requestNotificationPermission();
+      console.log('📱 Notification permission:', permissionStatus);
+      
+      if (permissionStatus === 'granted') {
+        // Register for push notifications
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          await savePushToken(token.data);
+          console.log('✅ Push token registered:', token.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
     }
   };
 
@@ -65,6 +87,10 @@ export default function WelcomeScreen() {
           language: selectedLang,
           theme: selectedTheme,
         }));
+        
+        // Setup notifications
+        await setupNotifications();
+        
         router.replace('/(tabs)');
       } catch (error) {
         console.error('Error saving preferences:', error);

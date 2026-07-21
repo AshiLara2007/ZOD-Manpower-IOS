@@ -18,8 +18,11 @@
       "icon": "./assets/images/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
-      }
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent",
+        "LSApplicationQueriesSchemes": ["whatsapp"],
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "associatedDomains": ["applinks:zodmanpower.info"]
     },
     "android": {
       "package": "com.zod.manpower",
@@ -32,7 +35,27 @@
         "backgroundColor": "#E6F4FE"
       },
       "permissions": [
-        "INTERNET"
+        "INTERNET",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "zodmanpower.info",
+              "pathPrefix": "/candidate"
+            },
+            {
+              "scheme": "https",
+              "host": "www.zodmanpower.info",
+              "pathPrefix": "/candidate"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {
@@ -47,6 +70,14 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#1a237e"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#1a237e",
+          "sounds": ["./assets/sounds/notification.wav"]
         }
       ]
     ],

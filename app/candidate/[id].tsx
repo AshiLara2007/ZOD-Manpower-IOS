@@ -9,6 +9,7 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useApp } from '../../lib/AppContext';
+import { generateShareMessage } from '../../lib/deepLinking';
 import { buttonHaptic, clickHaptic } from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 
@@ -25,7 +27,7 @@ const isSmallDevice = width < 375;
 
 export default function CandidateProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { t, colors } = useApp();
+  const { t, colors, language } = useApp();
   const { id } = useLocalSearchParams();
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,24 @@ export default function CandidateProfileScreen() {
     }
   }, [id]);
 
+  // Share Function
+  const handleShare = useCallback(async () => {
+    clickHaptic();
+    if (!candidate) return;
+
+    try {
+      const message = generateShareMessage(candidate.name || 'Candidate', candidate.id);
+      
+      await Share.share({
+        message: message,
+        title: `${candidate.name} - ZOD Manpower`,
+        url: `zodmanpowerios://candidate/${candidate.id}`,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  }, [candidate]);
+
   const handleWhatsApp = useCallback(() => {
     clickHaptic();
     if (!candidate) return;
@@ -74,7 +94,10 @@ export default function CandidateProfileScreen() {
     const ref = candidate.ref || candidate.id || 'N/A';
     const cv = candidate.cv || 'Not available';
 
-    const message = `*ZOD MANPOWER RECRUITMENT - DOHA, QATAR*\n\n━━━━━━━━━━━━━━━━━━━━\n*🎯 CANDIDATE DETAILS:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📌 Name:* ${name}\n*📌 Age:* ${age} years\n*📌 Gender:* ${gender}\n*📌 Marital Status:* ${maritalStatus}\n*📌 Religion:* ${religion}\n*📌 Reference:* ${ref}\n\n━━━━━━━━━━━━━━━━━━━━\n*💼 JOB INFORMATION:*\n━━━━━━━━━━━━━━━━━━━━\n\n*🔹 Position:* ${job}\n*🔹 Country:* ${country}\n*🔹 Experience:* ${experience}\n*🔹 Salary:* ${salary} QAR\n*🔹 Worker Type:* ${workerType}\n\n━━━━━━━━━━━━━━━━━━━━\n*📄 DOCUMENTS:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📎 CV Link:* ${cv}\n\n━━━━━━━━━━━━━━━━━━━━\n*🌐 WEBSITE:*\n━━━━━━━━━━━━━━━━━━━━\n\nhttps://zodmanpower.info\n\n━━━━━━━━━━━━━━━━━━━━\n*📞 Contact us:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📱 WhatsApp:* +974 5535 5206\n*📧 Email:* info@zodmanpower.info\n\n━━━━━━━━━━━━━━━━━━━━\n*💬 Reply "HIRE ${name.toUpperCase()}" to proceed*`;
+    const deepLink = `zodmanpowerios://candidate/${candidate.id}`;
+    const webLink = `https://zodmanpower.info/candidate/${candidate.id}`;
+
+    const message = `*ZOD MANPOWER RECRUITMENT - DOHA, QATAR*\n\n━━━━━━━━━━━━━━━━━━━━\n*🎯 CANDIDATE DETAILS:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📌 Name:* ${name}\n*📌 Age:* ${age} years\n*📌 Gender:* ${gender}\n*📌 Marital Status:* ${maritalStatus}\n*📌 Religion:* ${religion}\n*📌 Reference:* ${ref}\n\n━━━━━━━━━━━━━━━━━━━━\n*💼 JOB INFORMATION:*\n━━━━━━━━━━━━━━━━━━━━\n\n*🔹 Position:* ${job}\n*🔹 Country:* ${country}\n*🔹 Experience:* ${experience}\n*🔹 Salary:* ${salary} QAR\n*🔹 Worker Type:* ${workerType}\n\n━━━━━━━━━━━━━━━━━━━━\n*📄 DOCUMENTS:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📎 CV Link:* ${cv}\n\n━━━━━━━━━━━━━━━━━━━━\n*🌐 WEBSITE:*\n━━━━━━━━━━━━━━━━━━━━\n\nhttps://zodmanpower.info\n\n━━━━━━━━━━━━━━━━━━━━\n*📞 Contact us:*\n━━━━━━━━━━━━━━━━━━━━\n\n*📱 WhatsApp:* +974 5535 5206\n*📧 Email:* info@zodmanpower.info\n\n━━━━━━━━━━━━━━━━━━━━\n*🔗 Open in App:* ${deepLink}\n*🌐 Open in Browser:* ${webLink}\n\n━━━━━━━━━━━━━━━━━━━━\n*💬 Reply "HIRE ${name.toUpperCase()}" to proceed*`;
 
     const encodedMessage = encodeURIComponent(message);
     Linking.openURL(`https://wa.me/97455355206?text=${encodedMessage}`);
@@ -290,20 +313,28 @@ export default function CandidateProfileScreen() {
               </Text>
             </View>
 
+            {/* 3 Buttons Row - WhatsApp, Share, View CV */}
             <View style={styles.buttonRow}>
               <TouchableOpacity 
                 style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
                 onPress={handleWhatsApp}
                 activeOpacity={0.7}
               >
-                <Text style={styles.whatsappButtonText}>📱 {t('contactUs')}</Text>
+                <Text style={styles.whatsappButtonText}>📱 WhatsApp</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.shareButton, { backgroundColor: colors.primary }]}
+                onPress={handleShare}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.shareButtonText}>🔗 Share</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.viewCvButton, { borderColor: colors.border }]}
                 onPress={handleViewCv}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.viewCvButtonText, { color: colors.text }]}>📄 {t('viewCV')}</Text>
+                <Text style={[styles.viewCvButtonText, { color: colors.text }]}>📄 CV</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -478,7 +509,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   whatsappButton: {
     flex: 1,
@@ -488,7 +519,18 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   whatsappButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  shareButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '600',
   },
   viewCvButton: {
@@ -499,7 +541,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderWidth: 1,
   },
   viewCvButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   infoCard: {

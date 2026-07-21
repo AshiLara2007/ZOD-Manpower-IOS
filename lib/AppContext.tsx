@@ -35,6 +35,8 @@ const translations = {
     searchCandidates: 'Search candidates...',
     all: 'All',
     noCandidatesFound: 'No candidates found',
+    share: 'Share',
+    shareCandidate: 'Share Candidate',
     
     // Jobs
     findRightCandidate: 'Find the right candidate for your job',
@@ -93,6 +95,11 @@ const translations = {
     years: 'years',
     contactViaWhatsApp: 'Contact via WhatsApp',
     candidateNotFound: 'Candidate not found',
+    viewCV: 'View CV',
+    personalInfo: 'Personal Information',
+    nationality: 'Nationality',
+    whatsapp: 'WhatsApp',
+    noData: 'No data available',
     
     // Common
     qar: 'QAR',
@@ -125,6 +132,8 @@ const translations = {
     searchCandidates: 'البحث عن مرشحين...',
     all: 'الكل',
     noCandidatesFound: 'لم يتم العثور على مرشحين',
+    share: 'مشاركة',
+    shareCandidate: 'مشاركة المرشح',
     
     // Jobs
     findRightCandidate: 'ابحث عن المرشح المناسب لوظيفتك',
@@ -183,6 +192,11 @@ const translations = {
     years: 'سنوات',
     contactViaWhatsApp: 'اتصل عبر واتساب',
     candidateNotFound: 'المرشح غير موجود',
+    viewCV: 'عرض السيرة الذاتية',
+    personalInfo: 'المعلومات الشخصية',
+    nationality: 'الجنسية',
+    whatsapp: 'واتساب',
+    noData: 'لا توجد بيانات',
     
     // Common
     qar: 'ريال',
@@ -195,64 +209,38 @@ const translations = {
 // ============================================
 export const Colors = {
   light: {
-    // Backgrounds
     background: '#f5f5f5',
     card: '#ffffff',
-    
-    // Text
     text: '#1a237e',
     textSecondary: '#666666',
     textMuted: '#999999',
-    
-    // Borders
     border: '#e0e0e0',
-    
-    // Primary
     primary: '#1a237e',
     accent: '#D4880F',
-    
-    // Hero
     hero: '#1a237e',
     heroText: '#ffffff',
-    
-    // Status Badges
+    shadow: '#000000',
     statusAvailable: '#e8f5e9',
     statusReturned: '#e3f2fd',
     statusTextAvailable: '#2e7d32',
     statusTextReturned: '#1565c0',
-    
-    // Shadows
-    shadow: '#000000',
   },
   dark: {
-    // Backgrounds
     background: '#121212',
     card: '#1e1e1e',
-    
-    // Text
     text: '#ffffff',
     textSecondary: '#aaaaaa',
     textMuted: '#777777',
-    
-    // Borders
     border: '#333333',
-    
-    // Primary
     primary: '#4a6cf7',
     accent: '#D4880F',
-    
-    // Hero
     hero: '#0d1b3e',
     heroText: '#ffffff',
-    
-    // Status Badges
+    shadow: '#000000',
     statusAvailable: '#1a3a1a',
     statusReturned: '#1a2a4a',
     statusTextAvailable: '#4caf50',
     statusTextReturned: '#42a5f5',
-    
-    // Shadows
-    shadow: '#000000',
   }
 };
 
@@ -283,7 +271,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load saved preferences on mount
   useEffect(() => {
     loadPreferences();
   }, []);
@@ -303,7 +290,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Update language and save to storage
   const updateLanguage = async (lang: Language) => {
     setLanguage(lang);
     try {
@@ -318,7 +304,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Update theme and save to storage
   const updateTheme = async (thm: Theme) => {
     setTheme(thm);
     try {
@@ -333,19 +318,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Translation function
   const t = (key: string): string => {
     return translations[language]?.[key] || translations['en'][key] || key;
   };
 
-  // Get current theme colors
   const colors = Colors[theme];
-  
-  // RTL support
   const isRTL = language === 'ar';
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  // Show nothing while loading
   if (isLoading) {
     return null;
   }
@@ -366,9 +346,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ============================================
-// HOOK
-// ============================================
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {

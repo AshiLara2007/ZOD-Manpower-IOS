@@ -7,6 +7,7 @@ import {
   Image,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/AppContext';
+import { generateShareMessage } from '../../lib/deepLinking';
 import { clickHaptic } from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 
@@ -68,6 +70,19 @@ const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
     router.push(`/candidate/${candidate.id}`);
   }, [candidate.id]);
 
+  const handleShare = useCallback(async () => {
+    clickHaptic();
+    try {
+      const message = generateShareMessage(candidate.name || 'Candidate', candidate.id);
+      await Share.share({
+        message: message,
+        title: `${candidate.name} - ZOD Manpower`,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  }, [candidate]);
+
   return (
     <TouchableOpacity
       style={[styles.candidateCard, { backgroundColor: colors.card }]}
@@ -93,9 +108,14 @@ const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
           </View>
         </View>
       </View>
-      <Text style={[styles.candidateSalary, { color: colors.primary }]}>
-        {candidate.salary || '0'} QAR
-      </Text>
+      <View style={styles.cardRight}>
+        <Text style={[styles.candidateSalary, { color: colors.primary }]}>
+          {candidate.salary || '0'} QAR
+        </Text>
+        <TouchableOpacity onPress={handleShare} style={styles.shareIconButton} activeOpacity={0.7}>
+          <Text style={styles.shareIcon}>🔗</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 });
@@ -345,7 +365,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     fontSize: 14,
   },
-  // Country Flags Styles
   flagsContainer: {
     marginBottom: 10,
   },
@@ -374,7 +393,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  // Status Filters
   filterContainer: {
     flexDirection: 'row',
     gap: 6,
@@ -448,10 +466,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
+  cardRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
   candidateSalary: {
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 4,
+  },
+  shareIconButton: {
+    padding: 4,
+  },
+  shareIcon: {
+    fontSize: 16,
   },
   emptyContainer: {
     padding: 40,
