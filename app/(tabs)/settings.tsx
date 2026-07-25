@@ -1,18 +1,20 @@
-import React from 'react';
+import Constants from 'expo-constants';
+import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/AppContext';
 import { clickHaptic } from '../../lib/haptics';
+import { checkDeviceToken, sendTestNotification } from '../../lib/notifications';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -22,6 +24,16 @@ const LOGO_URL = "https://github.com/AshiLara2007/Prispoint-app/blob/main/WhatsA
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { language, theme, colors, t, updateLanguage, updateTheme, isRTL } = useApp();
+  const [tokenCount, setTokenCount] = useState(0);
+
+  useEffect(() => {
+    checkTokens();
+  }, []);
+
+  const checkTokens = async () => {
+    const result = await checkDeviceToken();
+    setTokenCount(result.count || 0);
+  };
 
   const handleCallSupport = () => {
     clickHaptic();
@@ -38,6 +50,20 @@ export default function SettingsScreen() {
     clickHaptic();
     updateTheme(thm);
     Alert.alert(t('success'), t('settingsSaved'));
+  };
+
+  const handleTestNotification = async () => {
+    clickHaptic();
+    try {
+      const result = await sendTestNotification();
+      if (result.success) {
+        Alert.alert('✅ Success', `Test notification sent to ${result.count} devices!`);
+      } else {
+        Alert.alert('⚠️ Warning', result.message || 'No devices found. Open the app and allow notifications.');
+      }
+    } catch (error) {
+      Alert.alert('❌ Error', 'Failed to send test notification');
+    }
   };
 
   const styles = getStyles(colors, isSmallDevice);
@@ -62,36 +88,20 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.optionsRow}>
           <TouchableOpacity
-            style={[
-              styles.optionButton, 
-              language === 'en' && styles.optionActive,
-              { backgroundColor: colors.card }
-            ]}
+            style={[styles.optionButton, language === 'en' && styles.optionActive]}
             onPress={() => handleLanguageChange('en')}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.optionText, 
-              language === 'en' && styles.optionActiveText,
-              { color: colors.text }
-            ]}>
+            <Text style={[styles.optionText, language === 'en' && styles.optionActiveText]}>
               🇬🇧 {t('english')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.optionButton, 
-              language === 'ar' && styles.optionActive,
-              { backgroundColor: colors.card }
-            ]}
+            style={[styles.optionButton, language === 'ar' && styles.optionActive]}
             onPress={() => handleLanguageChange('ar')}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.optionText, 
-              language === 'ar' && styles.optionActiveText,
-              { color: colors.text }
-            ]}>
+            <Text style={[styles.optionText, language === 'ar' && styles.optionActiveText]}>
               🇶🇦 {t('arabic')}
             </Text>
           </TouchableOpacity>
@@ -108,40 +118,44 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.optionsRow}>
           <TouchableOpacity
-            style={[
-              styles.optionButton, 
-              theme === 'light' && styles.optionActive,
-              { backgroundColor: colors.card }
-            ]}
+            style={[styles.optionButton, theme === 'light' && styles.optionActive]}
             onPress={() => handleThemeChange('light')}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.optionText, 
-              theme === 'light' && styles.optionActiveText,
-              { color: colors.text }
-            ]}>
+            <Text style={[styles.optionText, theme === 'light' && styles.optionActiveText]}>
               ☀️ {t('lightMode')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.optionButton, 
-              theme === 'dark' && styles.optionActive,
-              { backgroundColor: colors.card }
-            ]}
+            style={[styles.optionButton, theme === 'dark' && styles.optionActive]}
             onPress={() => handleThemeChange('dark')}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.optionText, 
-              theme === 'dark' && styles.optionActiveText,
-              { color: colors.text }
-            ]}>
+            <Text style={[styles.optionText, theme === 'dark' && styles.optionActiveText]}>
               🌙 {t('darkMode')}
             </Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Test Notification Section */}
+      <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: '#e8f5e9' }]}>
+            <Text style={styles.iconText}>📱</Text>
+          </View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Push Notifications</Text>
+        </View>
+        <TouchableOpacity 
+          style={[styles.testButton, { backgroundColor: colors.primary }]}
+          onPress={handleTestNotification}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.testButtonText}>📤 Send Test Notification</Text>
+        </TouchableOpacity>
+        <Text style={[styles.tokenCount, { color: colors.textMuted }]}>
+          Devices: {tokenCount}
+        </Text>
       </View>
 
       {/* Developer Info Section */}
@@ -181,7 +195,9 @@ export default function SettingsScreen() {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           
           <View style={styles.footerInfo}>
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('version')} 1.0.1</Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+              {t('version')} {Constants.expoConfig?.version || '1.0.4'}
+            </Text>
             <Text style={[styles.footerSubtext, { color: colors.textMuted }]}>{t('copyright')}</Text>
             <Text style={[styles.footerSubtext, { color: colors.textMuted }]}>{t('allRightsReserved')}</Text>
           </View>
@@ -250,6 +266,7 @@ const getStyles = (colors: any, isSmallDevice: boolean) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    backgroundColor: '#f5f5f5',
   },
   optionActive: {
     backgroundColor: '#e8eaf6',
@@ -258,9 +275,25 @@ const getStyles = (colors: any, isSmallDevice: boolean) => StyleSheet.create({
   optionText: {
     fontSize: isSmallDevice ? 13 : 14,
     fontWeight: '600',
+    color: '#333',
   },
   optionActiveText: {
     color: '#1a237e',
+  },
+  testButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tokenCount: {
+    fontSize: 12,
+    textAlign: 'center',
   },
   developerSection: {
     marginHorizontal: width * 0.04,
