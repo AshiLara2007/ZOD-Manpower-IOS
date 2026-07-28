@@ -11,7 +11,7 @@
     "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.manpower.app",
+      "bundleIdentifier": "com.zod.manpower",
       "buildNumber": "1.0.4",
       "jsEngine": "hermes",
       "requireFullScreen": true,
@@ -77,7 +77,7 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#1a237e",
-          "sounds": ["./assets/sounds/custom-notification.wav"]
+          "sounds": ["./assets/sounds/custom_notification.wav"]
         }
       ]
     ],
