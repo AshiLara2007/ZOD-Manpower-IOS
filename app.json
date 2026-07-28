@@ -11,7 +11,7 @@
     "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.zod.manpower",
+      "bundleIdentifier": "com.manpower.app",
       "buildNumber": "1.0.4",
       "jsEngine": "hermes",
       "requireFullScreen": true,
@@ -25,7 +25,7 @@
       "associatedDomains": ["applinks:zodmanpower.info"]
     },
     "android": {
-      "package": "com.zod.manpower",
+      "package": "com.zodmanpower.app",
       "versionCode": 5,
       "jsEngine": "hermes",
       "adaptiveIcon": {
@@ -77,7 +77,7 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#1a237e",
-          "sounds": ["./assets/sounds/notification.wav"]
+          "sounds": ["./assets/sounds/custom-notification.wav"]
         }
       ]
     ],

@@ -15,6 +15,21 @@ const translations = {
     jobs: 'Jobs',
     about: 'About',
     settings: 'Settings',
+    favorites: 'Favorites',
+    
+    // Admin
+    admin: 'Admin',
+    adminLogin: 'Admin Login',
+    adminLogout: 'Logout',
+    adminPanel: 'Admin Panel',
+    deleteCandidate: 'Delete Candidate',
+    confirmDelete: 'Confirm Delete',
+    deleteConfirmMsg: 'Are you sure you want to delete this candidate? This action cannot be undone.',
+    deleteSuccess: 'Candidate deleted successfully',
+    deleteFailed: 'Failed to delete candidate',
+    loginSuccess: 'Welcome Admin!',
+    loginFailed: 'Invalid username or password',
+    loggedOut: 'Logged out successfully',
     
     // Home - Hero Section
     heroTitle: 'Find Your Perfect Candidate Today',
@@ -37,6 +52,7 @@ const translations = {
     noCandidatesFound: 'No candidates found',
     share: 'Share',
     shareCandidate: 'Share Candidate',
+    noFavorites: 'No favorites yet',
     
     // Jobs
     findRightCandidate: 'Find the right candidate for your job',
@@ -112,6 +128,21 @@ const translations = {
     jobs: 'الوظائف',
     about: 'من نحن',
     settings: 'الإعدادات',
+    favorites: 'المفضلة',
+    
+    // Admin
+    admin: 'المشرف',
+    adminLogin: 'تسجيل دخول المشرف',
+    adminLogout: 'تسجيل الخروج',
+    adminPanel: 'لوحة التحكم',
+    deleteCandidate: 'حذف المرشح',
+    confirmDelete: 'تأكيد الحذف',
+    deleteConfirmMsg: 'هل أنت متأكد من حذف هذا المرشح؟ لا يمكن التراجع عن هذا الإجراء.',
+    deleteSuccess: 'تم حذف المرشح بنجاح',
+    deleteFailed: 'فشل حذف المرشح',
+    loginSuccess: 'مرحباً أيها المشرف!',
+    loginFailed: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+    loggedOut: 'تم تسجيل الخروج بنجاح',
     
     // Home - Hero Section
     heroTitle: 'ابحث عن مرشحك المثالي اليوم',
@@ -134,6 +165,7 @@ const translations = {
     noCandidatesFound: 'لم يتم العثور على مرشحين',
     share: 'مشاركة',
     shareCandidate: 'مشاركة المرشح',
+    noFavorites: 'لا توجد مفضلات بعد',
     
     // Jobs
     findRightCandidate: 'ابحث عن المرشح المناسب لوظيفتك',

@@ -1,7 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -17,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/AppContext';
 import { generateShareMessage } from '../../lib/deepLinking';
+import { addFavorite, getFavoriteIds, removeFavorite } from '../../lib/favorites';
 import { clickHaptic } from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 
@@ -36,9 +39,17 @@ const COUNTRIES = [
   { id: 'Uganda', name: 'Uganda', flag: '🇺🇬' },
 ];
 
-// Optimized Candidate Card - React.memo
-const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
+// Optimized Candidate Card
+const CandidateCard = React.memo(({ 
+  candidate, 
+  onFavoriteToggle, 
+  isFavorite: initialIsFavorite,
+  isAdmin,
+  onDelete,
+  onViewProfile,
+}: any) => {
   const { t, colors } = useApp();
+  const [isFav, setIsFav] = useState(initialIsFavorite);
   
   const getStatus = useCallback(() => {
     const wt = candidate.worker_type || candidate.workerType || '';
@@ -67,8 +78,16 @@ const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
 
   const handlePress = useCallback(() => {
     clickHaptic();
-    router.push(`/candidate/${candidate.id}`);
+    onViewProfile(candidate.id);
   }, [candidate.id]);
+
+  const handleFavorite = useCallback(async () => {
+    clickHaptic();
+    const result = await onFavoriteToggle(candidate.id);
+    if (result) {
+      setIsFav(!isFav);
+    }
+  }, [candidate.id, isFav]);
 
   const handleShare = useCallback(async () => {
     clickHaptic();
@@ -82,6 +101,28 @@ const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
       console.error('Error sharing:', error);
     }
   }, [candidate]);
+
+  // ✅ Delete function - only works if isAdmin is true
+  const handleDelete = useCallback(() => {
+    if (!isAdmin) {
+      Alert.alert('Access Denied', 'You need admin privileges to delete candidates.');
+      return;
+    }
+    
+    clickHaptic();
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this candidate? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: () => onDelete(candidate.id)
+        }
+      ]
+    );
+  }, [candidate.id, isAdmin]);
 
   return (
     <TouchableOpacity
@@ -112,9 +153,18 @@ const CandidateCard = React.memo(({ candidate }: { candidate: any }) => {
         <Text style={[styles.candidateSalary, { color: colors.primary }]}>
           {candidate.salary || '0'} QAR
         </Text>
+        <TouchableOpacity onPress={handleFavorite} style={styles.favoriteButton} activeOpacity={0.7}>
+          <Text style={styles.favoriteIcon}>{isFav ? '⭐' : '☆'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={handleShare} style={styles.shareIconButton} activeOpacity={0.7}>
           <Text style={styles.shareIcon}>🔗</Text>
         </TouchableOpacity>
+        {/* ✅ Delete button only visible when isAdmin is true */}
+        {isAdmin && (
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton} activeOpacity={0.7}>
+            <Text style={styles.deleteIcon}>🗑️</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -130,14 +180,40 @@ export default function CandidatesScreen() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetchCandidates();
+    loadFavorites();
+    checkAdminStatus();
+  }, []);
+
+  // ✅ Listen for focus events to check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      await checkAdminStatus();
+    };
+    checkAdmin();
   }, []);
 
   useEffect(() => {
     filterCandidates();
-  }, [candidates, search, filter, selectedCountry]);
+  }, [candidates, search, filter, selectedCountry, favorites, showFavorites]);
+
+  // ✅ Check admin status from AsyncStorage
+  const checkAdminStatus = async () => {
+    try {
+      const adminStatus = await AsyncStorage.getItem('isAdmin');
+      const isAdminUser = adminStatus === 'true';
+      setIsAdmin(isAdminUser);
+      console.log('👑 Admin status:', isAdminUser);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
 
   const fetchCandidates = useCallback(async () => {
     try {
@@ -156,10 +232,79 @@ export default function CandidatesScreen() {
     }
   }, []);
 
+  const loadFavorites = useCallback(async () => {
+    const favIds = await getFavoriteIds();
+    setFavorites(favIds);
+  }, []);
+
+  const handleFavoriteToggle = useCallback(async (candidateId: number) => {
+    const isFav = favorites.includes(candidateId);
+    let success = false;
+    
+    if (isFav) {
+      success = await removeFavorite(candidateId);
+      if (success) {
+        setFavorites(prev => prev.filter(id => id !== candidateId));
+      }
+    } else {
+      success = await addFavorite(candidateId);
+      if (success) {
+        setFavorites(prev => [...prev, candidateId]);
+      }
+    }
+    return success;
+  }, [favorites]);
+
+  // ✅ Delete function with admin check
+  const handleDelete = useCallback(async (candidateId: number) => {
+    // Double-check admin status before deleting
+    const adminStatus = await AsyncStorage.getItem('isAdmin');
+    if (adminStatus !== 'true') {
+      Alert.alert('Access Denied', 'You need admin privileges to delete candidates.');
+      return;
+    }
+
+    console.log('🗑️ Deleting candidate:', candidateId);
+    try {
+      const { error: deleteError } = await supabase
+        .from('talents')
+        .delete()
+        .eq('id', candidateId);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        Alert.alert('❌ Error', 'Failed to delete candidate from database');
+        return;
+      }
+
+      await supabase
+        .from('favorites')
+        .delete()
+        .eq('candidate_id', candidateId);
+
+      setCandidates(prev => prev.filter(c => c.id !== candidateId));
+      setFavorites(prev => prev.filter(id => id !== candidateId));
+      
+      Alert.alert('✅ Success', 'Candidate deleted successfully!');
+      console.log('✅ Candidate deleted successfully');
+    } catch (error) {
+      console.error('Error deleting candidate:', error);
+      Alert.alert('❌ Error', 'An error occurred while deleting the candidate');
+    }
+  }, []);
+
+  const handleViewProfile = useCallback((candidateId: number) => {
+    clickHaptic();
+    router.push(`/candidate/${candidateId}`);
+  }, []);
+
   const filterCandidates = useCallback(() => {
     let result = [...candidates];
 
-    // Search filter
+    if (showFavorites) {
+      result = result.filter(c => favorites.includes(c.id));
+    }
+
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(c =>
@@ -169,14 +314,12 @@ export default function CandidatesScreen() {
       );
     }
 
-    // Country filter
     if (selectedCountry !== 'all') {
       result = result.filter(c => 
         c.country?.toLowerCase() === selectedCountry.toLowerCase()
       );
     }
 
-    // Status filter
     if (filter === 'available') {
       result = result.filter(c => {
         const wt = c.worker_type || c.workerType || '';
@@ -190,12 +333,14 @@ export default function CandidatesScreen() {
     }
 
     setFiltered(result);
-  }, [candidates, search, filter, selectedCountry]);
+  }, [candidates, search, filter, selectedCountry, favorites, showFavorites]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchCandidates();
-  }, [fetchCandidates]);
+    loadFavorites();
+    checkAdminStatus(); // ✅ Refresh admin status on pull to refresh
+  }, [fetchCandidates, loadFavorites]);
 
   const handleFilterPress = useCallback((filterType: string) => {
     clickHaptic();
@@ -205,6 +350,11 @@ export default function CandidatesScreen() {
   const handleCountryPress = useCallback((countryId: string) => {
     clickHaptic();
     setSelectedCountry(countryId);
+  }, []);
+
+  const toggleShowFavorites = useCallback(() => {
+    clickHaptic();
+    setShowFavorites(prev => !prev);
   }, []);
 
   const counts = useMemo(() => {
@@ -217,8 +367,9 @@ export default function CandidatesScreen() {
       const wt = c.worker_type || c.workerType || '';
       return wt === 'Returned Housemaids' || wt === 'Returned';
     }).length;
-    return { total, available, returned };
-  }, [candidates]);
+    const favCount = favorites.length;
+    return { total, available, returned, favCount };
+  }, [candidates, favorites]);
 
   if (loading) {
     return (
@@ -232,7 +383,24 @@ export default function CandidatesScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('candidates')}</Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('candidates')}</Text>
+          {/* ✅ Admin Badge - Only visible when logged in */}
+          {isAdmin && (
+            <View style={styles.adminBadge}>
+              <Text style={styles.adminBadgeText}>👑 Admin</Text>
+            </View>
+          )}
+          <TouchableOpacity 
+            style={[styles.favFilterButton, showFavorites && styles.favFilterActive]}
+            onPress={toggleShowFavorites}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.favFilterText, showFavorites && styles.favFilterActiveText]}>
+              ⭐ {counts.favCount}
+            </Text>
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.searchContainer}>
           <TextInput
@@ -244,7 +412,7 @@ export default function CandidatesScreen() {
           />
         </View>
 
-        {/* Country Flags - Horizontal Scroll */}
+        {/* Country Flags */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -310,7 +478,16 @@ export default function CandidatesScreen() {
 
       <FlatList
         data={filtered}
-        renderItem={({ item }) => <CandidateCard candidate={item} />}
+        renderItem={({ item }) => (
+          <CandidateCard 
+            candidate={item} 
+            onFavoriteToggle={handleFavoriteToggle}
+            isFavorite={favorites.includes(item.id)}
+            isAdmin={isAdmin}
+            onDelete={handleDelete}
+            onViewProfile={handleViewProfile}
+          />
+        )}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={[styles.listContent, { paddingBottom: 80 }]}
         refreshControl={
@@ -319,7 +496,9 @@ export default function CandidatesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>👥</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('noCandidatesFound')}</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              {showFavorites ? t('noFavorites') : t('noCandidatesFound')}
+            </Text>
           </View>
         }
         showsVerticalScrollIndicator={false}
@@ -351,10 +530,42 @@ const styles = StyleSheet.create({
     paddingBottom: height * 0.015,
     borderBottomWidth: 1,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+  },
+  adminBadge: {
+    backgroundColor: '#f44336',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  adminBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  favFilterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  favFilterActive: {
+    backgroundColor: '#1a237e',
+  },
+  favFilterText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  favFilterActiveText: {
+    color: '#fff',
   },
   searchContainer: {
     marginBottom: 10,
@@ -475,10 +686,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 4,
   },
+  favoriteButton: {
+    padding: 4,
+  },
+  favoriteIcon: {
+    fontSize: 18,
+  },
   shareIconButton: {
     padding: 4,
   },
   shareIcon: {
+    fontSize: 16,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteIcon: {
     fontSize: 16,
   },
   emptyContainer: {

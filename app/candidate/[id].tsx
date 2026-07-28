@@ -1,4 +1,6 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useApp } from '../../lib/AppContext';
 import { generateShareMessage } from '../../lib/deepLinking';
-import { buttonHaptic, clickHaptic } from '../../lib/haptics';
+import { clickHaptic } from '../../lib/haptics';
 import { supabase } from '../../lib/supabase';
 
 const { width, height } = Dimensions.get('window');
@@ -27,12 +29,13 @@ const isSmallDevice = width < 375;
 
 export default function CandidateProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { t, colors, language } = useApp();
+  const { t, colors } = useApp();
   const { id } = useLocalSearchParams();
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showCvModal, setShowCvModal] = useState(false);
   const [cvLoading, setCvLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -59,14 +62,66 @@ export default function CandidateProfileScreen() {
     }
   }, [id]);
 
-  // Share Function
+  const handleDownloadCV = useCallback(async () => {
+    if (!candidate?.cv) {
+      Alert.alert('Info', 'No CV available for this candidate');
+      return;
+    }
+
+    clickHaptic();
+    setDownloading(true);
+
+    try {
+      const cvUrl = candidate.cv;
+      const fileName = `${candidate.name || 'candidate'}_CV`;
+      
+      let fileExtension = 'pdf';
+      const urlParts = cvUrl.split('.');
+      if (urlParts.length > 1) {
+        const ext = urlParts[urlParts.length - 1].toLowerCase();
+        if (['png', 'jpg', 'jpeg', 'pdf'].includes(ext)) {
+          fileExtension = ext;
+        }
+      }
+
+      const fileUri = FileSystem.documentDirectory + `${fileName}.${fileExtension}`;
+
+      const { uri } = await FileSystem.downloadAsync(cvUrl, fileUri);
+
+      const isSharingAvailable = await Sharing.isAvailableAsync();
+      
+      if (isSharingAvailable) {
+        await Sharing.shareAsync(uri, {
+          mimeType: getMimeType(fileExtension),
+          dialogTitle: `Download ${fileName}`,
+        });
+      } else {
+        Alert.alert('Download Complete', 'File saved to device');
+      }
+    } catch (error: any) {
+      console.error('Download error:', error);
+      Alert.alert('Error', error?.message || 'Failed to download CV. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  }, [candidate]);
+
+  const getMimeType = (extension: string): string => {
+    switch (extension.toLowerCase()) {
+      case 'png': return 'image/png';
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg';
+      case 'pdf': return 'application/pdf';
+      default: return 'application/octet-stream';
+    }
+  };
+
   const handleShare = useCallback(async () => {
     clickHaptic();
     if (!candidate) return;
 
     try {
       const message = generateShareMessage(candidate.name || 'Candidate', candidate.id);
-      
       await Share.share({
         message: message,
         title: `${candidate.name} - ZOD Manpower`,
@@ -117,13 +172,6 @@ export default function CandidateProfileScreen() {
     setShowCvModal(false);
     setCvLoading(true);
   }, []);
-
-  const handleDownloadCv = useCallback(() => {
-    buttonHaptic();
-    if (candidate?.cv) {
-      Linking.openURL(candidate.cv);
-    }
-  }, [candidate]);
 
   const handleOpenInBrowser = useCallback(() => {
     clickHaptic();
@@ -251,10 +299,13 @@ export default function CandidateProfileScreen() {
           <View style={[styles.modalFooter, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <TouchableOpacity 
               style={[styles.modalFooterButton, { backgroundColor: colors.primary }]}
-              onPress={handleDownloadCv}
+              onPress={handleDownloadCV}
+              disabled={downloading}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalFooterButtonText}>⬇ Download CV</Text>
+              <Text style={styles.modalFooterButtonText}>
+                {downloading ? '⏳ Downloading...' : '⬇ Download CV'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.modalFooterButton, { 
@@ -313,28 +364,31 @@ export default function CandidateProfileScreen() {
               </Text>
             </View>
 
-            {/* 3 Buttons Row - WhatsApp, Share, View CV */}
             <View style={styles.buttonRow}>
               <TouchableOpacity 
-                style={[styles.whatsappButton, { backgroundColor: '#25D366' }]}
+                style={[styles.actionButton, { backgroundColor: '#25D366' }]}
                 onPress={handleWhatsApp}
                 activeOpacity={0.7}
               >
-                <Text style={styles.whatsappButtonText}>📱 WhatsApp</Text>
+                <Text style={styles.actionButtonText}>📱 WhatsApp</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.shareButton, { backgroundColor: colors.primary }]}
+                style={[styles.actionButton, { backgroundColor: colors.primary }]}
                 onPress={handleShare}
                 activeOpacity={0.7}
               >
-                <Text style={styles.shareButtonText}>🔗 Share</Text>
+                <Text style={styles.actionButtonText}>🔗 Share</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.viewCvButton, { borderColor: colors.border }]}
+                style={[styles.actionButton, { 
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border
+                }]}
                 onPress={handleViewCv}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.viewCvButtonText, { color: colors.text }]}>📄 CV</Text>
+                <Text style={[styles.actionButtonText, { color: colors.text }]}>📄 CV</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -511,36 +565,16 @@ const getStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  whatsappButton: {
+  actionButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
   },
-  whatsappButtonText: {
+  actionButtonText: {
     color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  shareButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  shareButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  viewCvButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  viewCvButtonText: {
     fontSize: 13,
     fontWeight: '600',
   },

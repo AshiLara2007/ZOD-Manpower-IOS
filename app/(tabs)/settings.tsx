@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
 import {
@@ -5,16 +6,20 @@ import {
   Dimensions,
   Image,
   Linking,
+  Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/AppContext';
 import { clickHaptic } from '../../lib/haptics';
-import { checkDeviceToken, sendTestNotification } from '../../lib/notifications';
+import { checkDeviceToken } from '../../lib/notifications';
+import { isStoreReviewAvailable, requestStoreReview } from '../../lib/rateApp';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -25,9 +30,15 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { language, theme, colors, t, updateLanguage, updateTheme, isRTL } = useApp();
   const [tokenCount, setTokenCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
     checkTokens();
+    checkAdminStatus();
   }, []);
 
   const checkTokens = async () => {
@@ -35,35 +46,63 @@ export default function SettingsScreen() {
     setTokenCount(result.count || 0);
   };
 
-  const handleCallSupport = () => {
-    clickHaptic();
-    Linking.openURL('tel:+97430866890');
-  };
-
-  const handleLanguageChange = (lang: 'en' | 'ar') => {
-    clickHaptic();
-    updateLanguage(lang);
-    Alert.alert(t('success'), t('settingsSaved'));
-  };
-
-  const handleThemeChange = (thm: 'light' | 'dark') => {
-    clickHaptic();
-    updateTheme(thm);
-    Alert.alert(t('success'), t('settingsSaved'));
-  };
-
-  const handleTestNotification = async () => {
-    clickHaptic();
+  const checkAdminStatus = async () => {
     try {
-      const result = await sendTestNotification();
-      if (result.success) {
-        Alert.alert('✅ Success', `Test notification sent to ${result.count} devices!`);
-      } else {
-        Alert.alert('⚠️ Warning', result.message || 'No devices found. Open the app and allow notifications.');
+      const adminStatus = await AsyncStorage.getItem('isAdmin');
+      if (adminStatus === 'true') {
+        setIsAdmin(true);
       }
     } catch (error) {
-      Alert.alert('❌ Error', 'Failed to send test notification');
+      console.error('Error checking admin status:', error);
     }
+  };
+
+  // Rate App Function
+  const handleRateApp = async () => {
+    clickHaptic();
+    try {
+      const isAvailable = await isStoreReviewAvailable();
+      if (isAvailable) {
+        await requestStoreReview();
+        Alert.alert('⭐ Thank You!', 'Thank you for rating ZOD Manpower!');
+      } else {
+        // Fallback - Open App Store URL
+        const appId = '6787450829';
+        const url = Platform.select({
+          ios: `https://apps.apple.com/app/id${appId}?action=write-review`,
+          android: `market://details?id=com.zod.manpower`,
+        });
+        if (url) {
+          await Linking.openURL(url);
+        }
+      }
+    } catch (error) {
+      console.error('Error rating app:', error);
+      Alert.alert('Error', 'Could not open rating. Please try again later.');
+    }
+  };
+
+  const handleLogin = async () => {
+    clickHaptic();
+    setLoginError('');
+
+    if (username === 'admin' && password === '1978') {
+      await AsyncStorage.setItem('isAdmin', 'true');
+      setIsAdmin(true);
+      setLoginModalVisible(false);
+      setUsername('');
+      setPassword('');
+      Alert.alert('✅ Success', 'Welcome Admin!');
+    } else {
+      setLoginError('Invalid username or password');
+    }
+  };
+
+  const handleLogout = async () => {
+    clickHaptic();
+    await AsyncStorage.removeItem('isAdmin');
+    setIsAdmin(false);
+    Alert.alert('Logged Out', 'You have been logged out');
   };
 
   const styles = getStyles(colors, isSmallDevice);
@@ -78,6 +117,57 @@ export default function SettingsScreen() {
         <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings')}</Text>
       </View>
 
+      {/* Rate App Section */}
+      <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: '#fff3e0' }]}>
+            <Text style={styles.iconText}>⭐</Text>
+          </View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Rate App</Text>
+        </View>
+        <TouchableOpacity 
+          style={[styles.rateButton, { backgroundColor: colors.primary }]}
+          onPress={handleRateApp}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.rateButtonText}>⭐ Rate ZOD Manpower</Text>
+        </TouchableOpacity>
+        <Text style={[styles.rateSubtext, { color: colors.textMuted }]}>
+          Love this app? Rate us on the App Store!
+        </Text>
+      </View>
+
+      {/* Admin Section */}
+      <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: '#fce4ec' }]}>
+            <Text style={styles.iconText}>🔐</Text>
+          </View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Admin</Text>
+        </View>
+        
+        {isAdmin ? (
+          <View>
+            <Text style={[styles.adminStatus, { color: colors.textSecondary }]}>✅ Logged in as Admin</Text>
+            <TouchableOpacity 
+              style={[styles.logoutButton, { backgroundColor: '#f44336' }]}
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutButtonText}>🚪 Logout</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.adminButton, { backgroundColor: colors.primary }]}
+            onPress={() => setLoginModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.adminButtonText}>👤 Admin Login</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Language Section */}
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.sectionHeader}>
@@ -89,7 +179,7 @@ export default function SettingsScreen() {
         <View style={styles.optionsRow}>
           <TouchableOpacity
             style={[styles.optionButton, language === 'en' && styles.optionActive]}
-            onPress={() => handleLanguageChange('en')}
+            onPress={() => updateLanguage('en')}
             activeOpacity={0.7}
           >
             <Text style={[styles.optionText, language === 'en' && styles.optionActiveText]}>
@@ -98,7 +188,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.optionButton, language === 'ar' && styles.optionActive]}
-            onPress={() => handleLanguageChange('ar')}
+            onPress={() => updateLanguage('ar')}
             activeOpacity={0.7}
           >
             <Text style={[styles.optionText, language === 'ar' && styles.optionActiveText]}>
@@ -119,7 +209,7 @@ export default function SettingsScreen() {
         <View style={styles.optionsRow}>
           <TouchableOpacity
             style={[styles.optionButton, theme === 'light' && styles.optionActive]}
-            onPress={() => handleThemeChange('light')}
+            onPress={() => updateTheme('light')}
             activeOpacity={0.7}
           >
             <Text style={[styles.optionText, theme === 'light' && styles.optionActiveText]}>
@@ -128,7 +218,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.optionButton, theme === 'dark' && styles.optionActive]}
-            onPress={() => handleThemeChange('dark')}
+            onPress={() => updateTheme('dark')}
             activeOpacity={0.7}
           >
             <Text style={[styles.optionText, theme === 'dark' && styles.optionActiveText]}>
@@ -136,26 +226,6 @@ export default function SettingsScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Test Notification Section */}
-      <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={styles.sectionHeader}>
-          <View style={[styles.iconContainer, { backgroundColor: '#e8f5e9' }]}>
-            <Text style={styles.iconText}>📱</Text>
-          </View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Push Notifications</Text>
-        </View>
-        <TouchableOpacity 
-          style={[styles.testButton, { backgroundColor: colors.primary }]}
-          onPress={handleTestNotification}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.testButtonText}>📤 Send Test Notification</Text>
-        </TouchableOpacity>
-        <Text style={[styles.tokenCount, { color: colors.textMuted }]}>
-          Devices: {tokenCount}
-        </Text>
       </View>
 
       {/* Developer Info Section */}
@@ -185,7 +255,7 @@ export default function SettingsScreen() {
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>📞 {t('makeNumberSupport')}:</Text>
             <TouchableOpacity 
               style={[styles.supportButton, { backgroundColor: colors.primary + '15' }]} 
-              onPress={handleCallSupport}
+              onPress={() => Linking.openURL('tel:+97430866890')}
               activeOpacity={0.7}
             >
               <Text style={[styles.supportButtonText, { color: colors.primary }]}>📱 +974 3086 6890</Text>
@@ -203,6 +273,69 @@ export default function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      {/* Admin Login Modal */}
+      <Modal
+        visible={loginModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLoginModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>🔐 Admin Login</Text>
+              <TouchableOpacity onPress={() => setLoginModalVisible(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                Enter admin credentials to access admin panel
+              </Text>
+
+              <TextInput
+                style={[styles.modalInput, { 
+                  backgroundColor: colors.background, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
+                placeholder="Username"
+                placeholderTextColor={colors.textMuted}
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+              />
+
+              <TextInput
+                style={[styles.modalInput, { 
+                  backgroundColor: colors.background, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
+                placeholder="Password"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              {loginError ? (
+                <Text style={styles.modalError}>{loginError}</Text>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.modalLoginButton, { backgroundColor: colors.primary }]}
+                onPress={handleLogin}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalLoginButtonText}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -280,20 +413,46 @@ const getStyles = (colors: any, isSmallDevice: boolean) => StyleSheet.create({
   optionActiveText: {
     color: '#1a237e',
   },
-  testButton: {
+  rateButton: {
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 8,
   },
-  testButtonText: {
+  rateButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
-  tokenCount: {
+  rateSubtext: {
     fontSize: 12,
     textAlign: 'center',
+    marginTop: 6,
+  },
+  adminButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  adminButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  adminStatus: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  logoutButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   developerSection: {
     marginHorizontal: width * 0.04,
@@ -368,5 +527,70 @@ const getStyles = (colors: any, isSmallDevice: boolean) => StyleSheet.create({
   footerSubtext: {
     fontSize: isSmallDevice ? 9 : 10,
     marginTop: 2,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalClose: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#999',
+    padding: 4,
+  },
+  modalBody: {
+    gap: 12,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  modalInput: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    fontSize: 16,
+  },
+  modalError: {
+    color: '#f44336',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  modalLoginButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalLoginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

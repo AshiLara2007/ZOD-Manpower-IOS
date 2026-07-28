@@ -4,6 +4,9 @@ import * as Notifications from 'expo-notifications';
 import { Alert, Platform } from 'react-native';
 import { supabase } from './supabase';
 
+// ✅ Custom Sound File Name
+const SOUND_FILE = 'custom-notification.wav';
+
 // Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -23,6 +26,7 @@ export async function registerForPushNotificationsAsync() {
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#1a237e',
+      sound: SOUND_FILE, // ✅ Android Custom Sound
     });
   }
 
@@ -45,9 +49,22 @@ export async function registerForPushNotificationsAsync() {
   }
 
   try {
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    // Get project ID - try multiple ways
+    let projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    
+    // Fallback: Get from Constants.manifest
+    if (!projectId && Constants.manifest?.extra?.eas?.projectId) {
+      projectId = Constants.manifest.extra.eas.projectId;
+    }
+    
+    // Fallback: Hardcoded project ID (Expo Go සඳහා)
     if (!projectId) {
-      console.error('❌ Project ID not found in app.json');
+      projectId = '73898b70-ba5c-4ffd-a35a-3e1c519ae4cf';
+      console.log('📱 Using hardcoded project ID:', projectId);
+    }
+
+    if (!projectId) {
+      console.error('❌ Project ID not found');
       Alert.alert('Error', 'Project ID not found');
       return null;
     }
@@ -76,7 +93,7 @@ export async function registerForPushNotificationsAsync() {
 // Save push token to Supabase
 export async function savePushToken(token: string) {
   try {
-    console.log('💾 Saving token to Supabase:', token.substring(0, 20) + '...');
+    console.log('💾 Saving token to Supabase:', token.substring(0, 30) + '...');
     
     const { data, error } = await supabase
       .from('device_tokens')
@@ -96,21 +113,18 @@ export async function savePushToken(token: string) {
     }
     
     console.log('✅ Push token saved to Supabase');
-    console.log('📊 Data:', data);
     return data;
   } catch (error) {
     console.error('❌ Error saving push token:', error);
-    Alert.alert('Error', `Failed to save push token: ${error.message}`);
     return null;
   }
 }
 
-// Send push notification to all devices
+// Send push notification with custom sound
 export async function sendPushNotification(title: string, body: string, data?: any) {
   try {
     console.log('📤 Sending notification:', title);
     
-    // Get all push tokens from Supabase
     const { data: tokens, error } = await supabase
       .from('device_tokens')
       .select('token');
@@ -125,14 +139,13 @@ export async function sendPushNotification(title: string, body: string, data?: a
 
     const messages = tokens.map(({ token }) => ({
       to: token,
-      sound: 'default',
+      sound: SOUND_FILE, // ✅ Custom Sound
       title: title,
       body: body,
       data: data || {},
       badge: 1,
     }));
 
-    // Send notifications
     const responses = await Promise.all(
       messages.map(async (message) => {
         try {
@@ -145,9 +158,7 @@ export async function sendPushNotification(title: string, body: string, data?: a
             },
             body: JSON.stringify(message),
           });
-          const result = await response.json();
-          console.log('📨 Notification response:', result);
-          return result;
+          return await response.json();
         } catch (error) {
           console.error('❌ Error sending notification:', error);
           return null;
@@ -163,6 +174,15 @@ export async function sendPushNotification(title: string, body: string, data?: a
   }
 }
 
+// Send test notification with custom sound
+export async function sendTestNotification() {
+  return sendPushNotification(
+    '🔔 Test Notification',
+    'This is a test notification with custom sound!',
+    { type: 'test' }
+  );
+}
+
 // Send notification when new candidate added
 export async function notifyNewCandidate(candidateName: string, candidateJob: string, candidateId?: string) {
   const title = `🆕 New Candidate Available!`;
@@ -175,28 +195,19 @@ export async function notifyNewCandidate(candidateName: string, candidateJob: st
   return sendPushNotification(title, body, data);
 }
 
-// Send test notification
-export async function sendTestNotification() {
-  return sendPushNotification(
-    '🧪 Test Notification',
-    'This is a test notification from ZOD Manpower!',
-    { type: 'test' }
-  );
-}
-
-// Get user's notification permission status
-export async function getNotificationPermissionStatus() {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status;
-}
-
 // Request notification permission
 export async function requestNotificationPermission() {
   const { status } = await Notifications.requestPermissionsAsync();
   return status;
 }
 
-// Check if device token exists
+// Get notification permission status
+export async function getNotificationPermissionStatus() {
+  const { status } = await Notifications.getPermissionsAsync();
+  return status;
+}
+
+// Check device tokens
 export async function checkDeviceToken() {
   try {
     const { data, error } = await supabase
@@ -205,7 +216,6 @@ export async function checkDeviceToken() {
       .limit(1);
       
     if (error) throw error;
-    console.log('📊 Device tokens count:', data?.length || 0);
     return { count: data?.length || 0, tokens: data };
   } catch (error) {
     console.error('❌ Error checking device tokens:', error);
@@ -227,5 +237,38 @@ export async function clearAllDeviceTokens() {
   } catch (error) {
     console.error('❌ Error clearing device tokens:', error);
     return { success: false, error: error.message };
+  }
+}
+
+// Send notification to specific device
+export async function sendPushToDevice(token: string, title: string, body: string, data?: any) {
+  try {
+    console.log('📤 Sending to device:', token.substring(0, 30) + '...');
+    
+    const message = {
+      to: token,
+      sound: SOUND_FILE, // ✅ Custom Sound
+      title: title,
+      body: body,
+      data: data || {},
+      badge: 1,
+    };
+
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+    
+    const result = await response.json();
+    console.log('📨 Notification response:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error sending notification:', error);
+    return { error: error.message };
   }
 }
