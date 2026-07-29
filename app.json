@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZOD Manpower",
     "slug": "zod-manpower",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "zodmanpowerios",
@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zod.manpower",
-      "buildNumber": "1.0.4",
+      "buildNumber": "1.0.6",
       "jsEngine": "hermes",
       "requireFullScreen": true,
       "icon": "./assets/images/icon.png",
