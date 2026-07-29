@@ -19,14 +19,20 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent",
-        "LSApplicationQueriesSchemes": ["whatsapp"],
-        "UIBackgroundModes": ["remote-notification"]
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
-      "associatedDomains": ["applinks:zodmanpower.info"]
+      "associatedDomains": [
+        "applinks:zodmanpower.info"
+      ]
     },
     "android": {
       "package": "com.zodmanpower.app",
-      "versionCode": 6,
+      "versionCode": 7,
       "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -54,7 +60,10 @@
               "pathPrefix": "/candidate"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -77,7 +86,9 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#1a237e",
-          "sounds": ["./assets/sounds/custom_notification.wav"]
+          "sounds": [
+            "./assets/sounds/custom_notification.wav"
+          ]
         }
       ]
     ],
