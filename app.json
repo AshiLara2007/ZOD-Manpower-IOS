@@ -32,7 +32,7 @@
     },
     "android": {
       "package": "com.zodmanpower.app",
-      "versionCode": 7,
+      "versionCode": 8,
       "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
