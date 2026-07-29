@@ -266,7 +266,7 @@ export default function SettingsScreen() {
           
           <View style={styles.footerInfo}>
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-              {t('version')} {Constants.expoConfig?.version || '1.0.4'}
+              {t('version')} {Constants.expoConfig?.version || '1.1.0'}
             </Text>
             <Text style={[styles.footerSubtext, { color: colors.textMuted }]}>{t('copyright')}</Text>
             <Text style={[styles.footerSubtext, { color: colors.textMuted }]}>{t('allRightsReserved')}</Text>

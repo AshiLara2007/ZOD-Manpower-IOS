@@ -90,7 +90,8 @@
             "./assets/sounds/custom_notification.wav"
           ]
         }
-      ]
+      ],
+      "expo-build-properties"
     ],
     "extra": {
       "eas": {
