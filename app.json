@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zod.manpower",
-      "buildNumber": "1.0.6",
+      "buildNumber": "1.0.7",
       "jsEngine": "hermes",
       "requireFullScreen": true,
       "icon": "./assets/images/icon.png",
