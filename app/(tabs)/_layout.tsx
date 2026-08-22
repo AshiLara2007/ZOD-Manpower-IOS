@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/AppContext';
 
 // Heavy Impact Haptic Function
@@ -38,6 +39,10 @@ const TabButton = ({ children, onPress }: { children: React.ReactNode; onPress: 
 
 export default function TabLayout() {
   const { t, colors } = useApp();
+  const insets = useSafeAreaInsets();
+
+  // ✅ Android System Navigation Bar (Back, Home, Recent) එකට Adjust වෙන Tab Bar Height
+  const tabBarHeight = Platform.OS === 'android' ? 55 + insets.bottom : 60 + insets.bottom;
 
   return (
     <Tabs
@@ -48,8 +53,8 @@ export default function TabLayout() {
           backgroundColor: colors.card,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 5,
+          height: tabBarHeight,          // ✅ Dynamic Height
+          paddingBottom: insets.bottom,  // ✅ System Nav Bar එකට ඉහළින්
           paddingTop: 5,
         },
         tabBarLabelStyle: {

@@ -102,13 +102,11 @@ const CandidateCard = React.memo(({
     }
   }, [candidate]);
 
-  // ✅ Delete function - only works if isAdmin is true
   const handleDelete = useCallback(() => {
     if (!isAdmin) {
       Alert.alert('Access Denied', 'You need admin privileges to delete candidates.');
       return;
     }
-    
     clickHaptic();
     Alert.alert(
       'Confirm Delete',
@@ -159,7 +157,6 @@ const CandidateCard = React.memo(({
         <TouchableOpacity onPress={handleShare} style={styles.shareIconButton} activeOpacity={0.7}>
           <Text style={styles.shareIcon}>🔗</Text>
         </TouchableOpacity>
-        {/* ✅ Delete button only visible when isAdmin is true */}
         {isAdmin && (
           <TouchableOpacity onPress={handleDelete} style={styles.deleteButton} activeOpacity={0.7}>
             <Text style={styles.deleteIcon}>🗑️</Text>
@@ -190,25 +187,15 @@ export default function CandidatesScreen() {
     checkAdminStatus();
   }, []);
 
-  // ✅ Listen for focus events to check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      await checkAdminStatus();
-    };
-    checkAdmin();
-  }, []);
-
   useEffect(() => {
     filterCandidates();
   }, [candidates, search, filter, selectedCountry, favorites, showFavorites]);
 
-  // ✅ Check admin status from AsyncStorage
   const checkAdminStatus = async () => {
     try {
       const adminStatus = await AsyncStorage.getItem('isAdmin');
-      const isAdminUser = adminStatus === 'true';
-      setIsAdmin(isAdminUser);
-      console.log('👑 Admin status:', isAdminUser);
+      setIsAdmin(adminStatus === 'true');
+      console.log('👑 Admin status:', adminStatus === 'true');
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
@@ -255,16 +242,14 @@ export default function CandidatesScreen() {
     return success;
   }, [favorites]);
 
-  // ✅ Delete function with admin check
   const handleDelete = useCallback(async (candidateId: number) => {
-    // Double-check admin status before deleting
+    console.log('🗑️ Deleting candidate:', candidateId);
     const adminStatus = await AsyncStorage.getItem('isAdmin');
     if (adminStatus !== 'true') {
       Alert.alert('Access Denied', 'You need admin privileges to delete candidates.');
       return;
     }
 
-    console.log('🗑️ Deleting candidate:', candidateId);
     try {
       const { error: deleteError } = await supabase
         .from('talents')
@@ -339,7 +324,7 @@ export default function CandidatesScreen() {
     setRefreshing(true);
     fetchCandidates();
     loadFavorites();
-    checkAdminStatus(); // ✅ Refresh admin status on pull to refresh
+    checkAdminStatus();
   }, [fetchCandidates, loadFavorites]);
 
   const handleFilterPress = useCallback((filterType: string) => {
@@ -385,7 +370,6 @@ export default function CandidatesScreen() {
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>{t('candidates')}</Text>
-          {/* ✅ Admin Badge - Only visible when logged in */}
           {isAdmin && (
             <View style={styles.adminBadge}>
               <Text style={styles.adminBadgeText}>👑 Admin</Text>
@@ -489,7 +473,12 @@ export default function CandidatesScreen() {
           />
         )}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={[styles.listContent, { paddingBottom: 80 }]}
+        contentContainerStyle={[
+          styles.listContent, 
+          { 
+            paddingBottom: 80 + insets.bottom  // ✅ Android Nav Bar එකට Adjust
+          }
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

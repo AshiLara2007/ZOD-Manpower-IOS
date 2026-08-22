@@ -8,7 +8,6 @@ export interface ChatMessage {
   options?: ChatOption[];
   candidates?: any[];
   timestamp: Date;
-  language?: 'en' | 'ar';
 }
 
 export interface ChatOption {
@@ -35,10 +34,12 @@ const JOBS = [
   'Baby sitting', 'Domestic Worker'
 ];
 
-// Language Translations
+// ============================================
+// LANGUAGE TRANSLATIONS
+// ============================================
 const LANGUAGES = {
   en: {
-    welcome: '👋 Welcome to ZOD Manpower Chat Bot!\n\nHow can I help you today?\n\n1️⃣ Search Candidates\n2️⃣ More Information\n3️⃣ Contact Us\n\nType the number or tap the option below:',
+    welcome: '👋 Welcome to ZOD Manpower AI Assistant!\n\nI\'m here to help you find the perfect candidates, answer your questions, and assist with recruitment.\n\nHow can I help you today?',
     search: '🔍 *Search Candidates*\n\nHow would you like to search?\n\n1️⃣ Show All Candidates (8 Countries)\n2️⃣ Search by Country\n3️⃣ Search by Job\n\nType the number or tap below:',
     searchAll: '🌍 *Latest Candidates from 8 Countries:*\n\n',
     searchCountry: '🌏 *Select a Country:*\n\n',
@@ -50,9 +51,22 @@ const LANGUAGES = {
     selectJob: '💼 Search by Job',
     showAll: '🌍 Show All Candidates (8 Countries)',
     back: '🔙 Main Menu',
+    info: 'ℹ️ *More Information*\n\n📌 *Processing Time:* 20 days after visa approval\n\n💰 *Pricing Information:*\n• Recruitment Fee: Contact us\n• Visa Processing: Contact us\n• Medical Insurance: Contact us\n• Air Ticket: Contact us\n\n📞 For exact pricing, please Contact Us or visit our website.',
+    pricing: '💰 *ZOD Manpower Pricing*\n\n🇮🇩 *Indonesia:* $500 - $800\n🇱🇰 *Sri Lanka:* $450 - $700\n🇵🇭 *Philippines:* $550 - $850\n🇧🇩 *Bangladesh:* $400 - $650\n🇮🇳 *India:* $450 - $750\n🇪🇹 *Ethiopia:* $350 - $550\n🇺🇬 *Uganda:* $350 - $550\n🇰🇪 *Kenya:* $400 - $600\n\n💡 *Note:* Prices may vary based on job type and experience.',
+    processing: '⏱️ *Processing Time*\n\n📌 *Visa Processing:* 20 days after visa approval\n\n📋 *Process Steps:*\n1️⃣ Document Collection (2-3 days)\n2️⃣ Medical Examination (3-5 days)\n3️⃣ Visa Application (5-7 days)\n4️⃣ Visa Approval (7-10 days)\n5️⃣ Travel Arrangement (2-3 days)',
+    contact: '📞 *Contact Us*\n\n🏢 *ZOD Manpower Recruitment*\n📍 Location: Doha, Qatar\n\n📱 *WhatsApp:* +974 5535 5206\n📧 *Email:* info@zodmanpower.info\n🌐 *Website:* https://zodmanpower.info\n\n🕐 *Working Hours:*\nSaturday - Thursday: 9AM - 10PM\nFriday: Closed',
+    whatsapp: '📱 *Chat on WhatsApp*\n\nClick below to chat with our team on WhatsApp!\n\n📞 +974 5535 5206',
+    email: '📧 *Send Email*\n\n📧 info@zodmanpower.info\n\nWe will respond within 24 hours.',
+    languageSelect: '🌐 *Select Language / اختر اللغة*\n\n🇬🇧 English\n🇶🇦 العربية\n\nType "en" for English or "ar" for Arabic.',
+    greeting: 'Hello! How can I assist you today?',
+    goodbye: 'Thank you for chatting with us! Have a great day!',
+    unknown: '🤔 I didn\'t understand that.\n\nType "menu" to see available options.\n\nYou can also type:\n• "Search" to find candidates\n• "Info" for more information\n• "Contact" to reach us',
+    candidateNotFound: 'Candidate not found. Please try again.',
+    countryList: 'Please select a country from the list below:',
+    jobList: 'Please select a job from the list below:',
   },
   ar: {
-    welcome: '👋 مرحباً بكم في بوت محادثة ZOD Manpower!\n\nكيف يمكنني مساعدتك اليوم؟\n\n١️⃣ بحث عن مرشحين\n٢️⃣ مزيد من المعلومات\n٣️⃣ اتصل بنا\n\nاكتب الرقم أو اضغط على الخيار أدناه:',
+    welcome: '👋 مرحباً بك في مساعد ZOD Manpower الذكي!\n\nأنا هنا لمساعدتك في العثور على المرشحين المثاليين، والإجابة على أسئلتك، والمساعدة في التوظيف.\n\nكيف يمكنني مساعدتك اليوم؟',
     search: '🔍 *بحث عن مرشحين*\n\nكيف تريد البحث؟\n\n١️⃣ عرض جميع المرشحين (8 دول)\n٢️⃣ البحث حسب الدولة\n٣️⃣ البحث حسب الوظيفة\n\nاكتب الرقم أو اضغط أدناه:',
     searchAll: '🌍 *أحدث المرشحين من 8 دول:*\n\n',
     searchCountry: '🌏 *اختر دولة:*\n\n',
@@ -64,10 +78,25 @@ const LANGUAGES = {
     selectJob: '💼 البحث حسب الوظيفة',
     showAll: '🌍 عرض جميع المرشحين (8 دول)',
     back: '🔙 القائمة الرئيسية',
+    info: 'ℹ️ *مزيد من المعلومات*\n\n📌 *وقت المعالجة:* 20 يومًا بعد الموافقة على التأشيرة\n\n💰 *معلومات الأسعار:*\n• رسوم التوظيف: اتصل بنا\n• معالجة التأشيرة: اتصل بنا\n• التأمين الطبي: اتصل بنا\n• تذكرة الطيران: اتصل بنا\n\n📞 للحصول على أسعار دقيقة، يرجى الاتصال بنا.',
+    pricing: '💰 *أسعار ZOD Manpower*\n\n🇮🇩 *إندونيسيا:* 500 - 800 دولار\n🇱🇰 *سريلانكا:* 450 - 700 دولار\n🇵🇭 *الفلبين:* 550 - 850 دولار\n🇧🇩 *بنغلاديش:* 400 - 650 دولار\n🇮🇳 *الهند:* 450 - 750 دولار\n🇪🇹 *إثيوبيا:* 350 - 550 دولار\n🇺🇬 *أوغندا:* 350 - 550 دولار\n🇰🇪 *كينيا:* 400 - 600 دولار\n\n💡 *ملاحظة:* قد تختلف الأسعار حسب نوع الوظيفة والخبرة.',
+    processing: '⏱️ *وقت المعالجة*\n\n📌 *معالجة التأشيرة:* 20 يومًا بعد الموافقة على التأشيرة\n\n📋 *خطوات العملية:*\n١️⃣ جمع المستندات (2-3 أيام)\n٢️⃣ الفحص الطبي (3-5 أيام)\n٣️⃣ طلب التأشيرة (5-7 أيام)\n٤️⃣ الموافقة على التأشيرة (7-10 أيام)\n٥️⃣ ترتيب السفر (2-3 أيام)',
+    contact: '📞 *اتصل بنا*\n\n🏢 *ZOD Manpower Recruitment*\n📍 الموقع: الدوحة، قطر\n\n📱 *واتساب:* +974 5535 5206\n📧 *البريد الإلكتروني:* info@zodmanpower.info\n🌐 *الموقع الإلكتروني:* https://zodmanpower.info\n\n🕐 *ساعات العمل:*\nالسبت - الخميس: 9 صباحاً - 10 مساءً\nالجمعة: مغلق',
+    whatsapp: '📱 *الدردشة عبر واتساب*\n\nانقر أدناه للدردشة مع فريقنا على واتساب!\n\n📞 +974 5535 5206',
+    email: '📧 *إرسال بريد إلكتروني*\n\n📧 info@zodmanpower.info\n\nسوف نرد في غضون 24 ساعة.',
+    languageSelect: '🌐 *اختر اللغة*\n\n🇬🇧 English\n🇶🇦 العربية\n\nاكتب "en" للإنجليزية أو "ar" للعربية.',
+    greeting: 'مرحباً! كيف يمكنني مساعدتك اليوم؟',
+    goodbye: 'شكراً لتحدثك معنا! أتمنى لك يوماً سعيداً!',
+    unknown: '🤔 لم أفهم ذلك.\n\nاكتب "menu" لرؤية الخيارات المتاحة.\n\nيمكنك أيضاً كتابة:\n• "Search" للبحث عن مرشحين\n• "Info" لمزيد من المعلومات\n• "Contact" للاتصال بنا',
+    candidateNotFound: 'لم يتم العثور على المرشح. يرجى المحاولة مرة أخرى.',
+    countryList: 'يرجى اختيار دولة من القائمة أدناه:',
+    jobList: 'يرجى اختيار وظيفة من القائمة أدناه:',
   }
 };
 
-// Get Bot Response with Language
+// ============================================
+// MAIN CHAT BOT FUNCTION
+// ============================================
 export const getBotResponse = async (
   message: string,
   language: 'en' | 'ar' = 'en',
@@ -76,7 +105,9 @@ export const getBotResponse = async (
   const lowerMsg = message.toLowerCase().trim();
   const t = LANGUAGES[language];
 
-  // === LANGUAGE SELECTION ===
+  // ============================================
+  // LANGUAGE SELECTION
+  // ============================================
   if (lowerMsg === 'language' || lowerMsg === 'lang' || lowerMsg === 'en' || lowerMsg === 'ar') {
     if (lowerMsg === 'en') {
       return {
@@ -91,8 +122,10 @@ export const getBotResponse = async (
     }
   }
 
-  // === MENU OPTIONS ===
-  if (lowerMsg === 'menu' || lowerMsg === 'help' || lowerMsg === 'start') {
+  // ============================================
+  // MENU OPTIONS
+  // ============================================
+  if (lowerMsg === 'menu' || lowerMsg === 'help' || lowerMsg === 'start' || lowerMsg === '') {
     return {
       text: t.welcome,
       options: [
@@ -104,10 +137,12 @@ export const getBotResponse = async (
     };
   }
 
-  // === LANGUAGE SELECTION ===
+  // ============================================
+  // LANGUAGE CHANGE
+  // ============================================
   if (lowerMsg.includes('language') || lowerMsg === 'language') {
     return {
-      text: '🌐 *Select Language / اختر اللغة*\n\n🇬🇧 English\n🇶🇦 العربية\n\nType "en" for English or "ar" for Arabic.',
+      text: t.languageSelect,
       options: [
         { id: 'lang_en', label: '🇬🇧 English', action: 'en' },
         { id: 'lang_ar', label: '🇶🇦 العربية', action: 'ar' },
@@ -116,7 +151,9 @@ export const getBotResponse = async (
     };
   }
 
-  // === 1. SEARCH CANDIDATES ===
+  // ============================================
+  // SEARCH CANDIDATES
+  // ============================================
   if (lowerMsg.includes('search') || lowerMsg === '1' || lowerMsg === '1️⃣') {
     return {
       text: t.search,
@@ -129,7 +166,9 @@ export const getBotResponse = async (
     };
   }
 
-  // === SEARCH: SHOW ALL (8 Countries - Latest 1 per Country) ===
+  // ============================================
+  // SHOW ALL CANDIDATES (8 Countries)
+  // ============================================
   if (lowerMsg.includes('all candidates') || lowerMsg === 'search_all') {
     try {
       const countryPromises = COUNTRIES.map(async (country) => {
@@ -173,7 +212,9 @@ export const getBotResponse = async (
     }
   }
 
-  // === SEARCH: BY COUNTRY (Auto Select) ===
+  // ============================================
+  // SEARCH BY COUNTRY
+  // ============================================
   if (lowerMsg.includes('search by country') || lowerMsg === 'search_country') {
     const countryList = COUNTRIES.map((c, i) => 
       `${i + 1}. ${c.flag} ${c.name}`
@@ -191,7 +232,9 @@ export const getBotResponse = async (
     };
   }
 
-  // === SEARCH: BY JOB (Auto Select) ===
+  // ============================================
+  // SEARCH BY JOB
+  // ============================================
   if (lowerMsg.includes('search by job') || lowerMsg === 'search_job') {
     const jobList = JOBS.map((j, i) => 
       `${i + 1}. 💼 ${j}`
@@ -209,7 +252,9 @@ export const getBotResponse = async (
     };
   }
 
-  // === COUNTRY SELECTION (Auto Select) ===
+  // ============================================
+  // COUNTRY SELECTION (Dynamic)
+  // ============================================
   for (const country of COUNTRIES) {
     if (lowerMsg.includes(country.name.toLowerCase()) || 
         lowerMsg === `country_${country.id}`) {
@@ -252,7 +297,9 @@ export const getBotResponse = async (
     }
   }
 
-  // === JOB SELECTION (Auto Select) ===
+  // ============================================
+  // JOB SELECTION (Dynamic)
+  // ============================================
   for (const job of JOBS) {
     const jobKey = job.toLowerCase().replace(/\s/g, '_');
     if (lowerMsg.includes(job.toLowerCase()) || 
@@ -296,10 +343,12 @@ export const getBotResponse = async (
     }
   }
 
-  // === 2. MORE INFORMATION ===
+  // ============================================
+  // MORE INFORMATION
+  // ============================================
   if (lowerMsg.includes('more information') || lowerMsg === '2' || lowerMsg === '2️⃣' || lowerMsg === 'info') {
     return {
-      text: 'ℹ️ *More Information*\n\n📌 *Processing Time:* 20 days after visa approval\n\n💰 *Pricing Information:*\n• Recruitment Fee: Contact us\n• Visa Processing: Contact us\n• Medical Insurance: Contact us\n• Air Ticket: Contact us\n\n📞 For exact pricing, please Contact Us or visit our website.',
+      text: t.info,
       options: [
         { id: 'pricing', label: '💰 View Prices', action: 'pricing' },
         { id: 'processing', label: '⏱️ Processing Time', action: 'processing' },
@@ -309,30 +358,36 @@ export const getBotResponse = async (
     };
   }
 
-  // === PRICING ===
+  // ============================================
+  // PRICING
+  // ============================================
   if (lowerMsg.includes('pricing') || lowerMsg === 'pricing') {
     return {
-      text: '💰 *ZOD Manpower Pricing*\n\n🇮🇩 *Indonesia:* QR 17,000\n🇱🇰 *Sri Lanka:* QR 16,000\n🇵🇭 *Philippines:* QR 15,000\n🇧🇩 *Bangladesh:* QR 14,000\n🇮🇳 *India:* QR 14,000\n🇪🇹 *Ethiopia:* QR 9,000\n🇺🇬 *Uganda:* QR 9,000\n🇰🇪 *Kenya:* QR 9,000\n\n💡 *Note:* Prices may vary based on job type and experience.\n\n📞 Contact us for exact pricing.',
+      text: t.pricing,
       options: [
         { id: 'menu', label: '🔙 Main Menu', action: 'menu' },
       ],
     };
   }
 
-  // === PROCESSING TIME ===
+  // ============================================
+  // PROCESSING TIME
+  // ============================================
   if (lowerMsg.includes('processing') || lowerMsg === 'processing') {
     return {
-      text: '⏱️ *Processing Time*\n\n📌 *Visa Processing:* 20 days after visa approval\n\n📋 *Process Steps:*\n1️⃣ Document Collection (2-3 days)\n2️⃣ Medical Examination (3-5 days)\n3️⃣ Visa Application (5-7 days)\n4️⃣ Visa Approval (7-10 days)\n5️⃣ Travel Arrangement (2-3 days)\n\n📞 For faster processing, contact our team.',
+      text: t.processing,
       options: [
         { id: 'menu', label: '🔙 Main Menu', action: 'menu' },
       ],
     };
   }
 
-  // === 3. CONTACT US ===
+  // ============================================
+  // CONTACT US
+  // ============================================
   if (lowerMsg.includes('contact') || lowerMsg === '3' || lowerMsg === '3️⃣' || lowerMsg === 'contact') {
     return {
-      text: '📞 *Contact Us*\n\n🏢 *ZOD Manpower Recruitment*\n📍 Location: Doha, Qatar\n\n📱 *WhatsApp:* +974 5535 5206\n📧 *Email:* info@zodmanpower.info\n🌐 *Website:* https://zodmanpower.info\n\n🕐 *Working Hours:*\nSaturday - Thursday: 9AM - 10PM\nFriday: Closed\n\n💬 Click below to WhatsApp us!',
+      text: t.contact,
       options: [
         { id: 'whatsapp', label: '📱 Chat on WhatsApp', action: 'whatsapp' },
         { id: 'email', label: '📧 Send Email', action: 'email' },
@@ -341,10 +396,12 @@ export const getBotResponse = async (
     };
   }
 
-  // === WHATSAPP ===
+  // ============================================
+  // WHATSAPP
+  // ============================================
   if (lowerMsg.includes('whatsapp') || lowerMsg === 'whatsapp') {
     return {
-      text: '📱 *Chat on WhatsApp*\n\nClick below to chat with our team on WhatsApp!\n\n📞 +974 5535 5206',
+      text: t.whatsapp,
       options: [
         { id: 'open_whatsapp', label: '📱 Open WhatsApp', action: 'open_whatsapp' },
         { id: 'menu', label: '🔙 Main Menu', action: 'menu' },
@@ -352,10 +409,12 @@ export const getBotResponse = async (
     };
   }
 
-  // === EMAIL ===
+  // ============================================
+  // EMAIL
+  // ============================================
   if (lowerMsg.includes('email') || lowerMsg === 'email') {
     return {
-      text: '📧 *Send Email*\n\n📧 info@zodmanpower.info\n\nWe will respond within 24 hours.',
+      text: t.email,
       options: [
         { id: 'send_email', label: '📧 Compose Email', action: 'send_email' },
         { id: 'menu', label: '🔙 Main Menu', action: 'menu' },
@@ -363,9 +422,32 @@ export const getBotResponse = async (
     };
   }
 
-  // === DEFAULT / UNKNOWN ===
+  // ============================================
+  // GREETINGS & FAREWELL
+  // ============================================
+  if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('hey')) {
+    return {
+      text: t.greeting,
+      options: [
+        { id: 'menu', label: '📋 Show Menu', action: 'menu' },
+      ],
+    };
+  }
+
+  if (lowerMsg.includes('bye') || lowerMsg.includes('goodbye')) {
+    return {
+      text: t.goodbye,
+      options: [
+        { id: 'menu', label: '📋 Show Menu', action: 'menu' },
+      ],
+    };
+  }
+
+  // ============================================
+  // DEFAULT / UNKNOWN
+  // ============================================
   return {
-    text: '🤔 I didn\'t understand that.\n\nType "menu" to see available options.\n\nYou can also type:\n• "Search" to find candidates\n• "Info" for more information\n• "Contact" to reach us',
+    text: t.unknown,
     options: [
       { id: 'menu', label: '📋 Show Menu', action: 'menu' },
     ],
