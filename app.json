@@ -12,17 +12,23 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zod.manpower",
-      "buildNumber": "1.1.2",
+      "buildNumber": "1.1.3",
       "jsEngine": "hermes",
       "requireFullScreen": true,
       "icon": "./assets/images/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent",
-        "LSApplicationQueriesSchemes": ["whatsapp"],
-        "UIBackgroundModes": ["remote-notification"]
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
-      "associatedDomains": ["applinks:zodmanpower.info"]
+      "associatedDomains": [
+        "applinks:zodmanpower.info"
+      ]
     },
     "android": {
       "package": "com.zod.manpower",
@@ -54,7 +60,10 @@
               "pathPrefix": "/candidate"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -77,7 +86,9 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#1a237e",
-          "sounds": ["./assets/sounds/custom-notification.wav"]
+          "sounds": [
+            "./assets/sounds/custom-notification.wav"
+          ]
         }
       ],
       [
